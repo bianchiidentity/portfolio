@@ -1,0 +1,168 @@
+---
+// ヒーローセクションのコンポーネント化
+---
+
+<main class="hero-curve">
+  <svg
+    class="curved-shape"
+    viewBox="0 0 900 600"
+    preserveAspectRatio="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="
+      M0,0 H900 V600 H0 Z
+      M900,700
+      A700,700 0 0,1 205,0
+      L900,0 Z
+    "
+      fill="#e67e22"
+      fill-rule="evenodd"></path>
+  </svg>
+  <div class="hero-image-slider">
+    <img class="hero-bg-image active" src="/mv.jpg" alt="自画像1" />
+    <img class="hero-bg-image" src="/mv3.png" alt="自画像2" />
+  </div>
+  <div class="hero-text">
+    <div class="hero-label">Webエンジニア</div>
+    <div class="hero-furigana">かわさき こうじ</div>
+    <h1 class="hero-name">川崎浩史</h1>
+    <div class="hero-catch">
+      技術で人を幸せに。<br />UI/UX・フロントエンド・クラウドが得意です。
+    </div>
+  </div>
+  <style>
+    .hero-curve {
+      position: relative;
+      height: calc(100dvh - 10vh);
+      width: 100vw;
+      min-width: 0;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .curved-shape {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+    .hero-image-slider {
+      position: absolute;
+      top: 0;
+      left: calc(205 / 900 * 100vw);
+      width: calc(100vw - (205 / 900 * 100vw));
+      height: 100%;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .hero-bg-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: left center;
+      opacity: 0;
+      transition: opacity 1s;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .hero-bg-image.active {
+      opacity: 1;
+      z-index: 1;
+    }
+    .hero-text {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 50vw;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+      padding-left: 4vw;
+      padding-top: 28vh;
+      z-index: 3;
+      color: #fff;
+      text-shadow:
+        0 4px 24px #e67e22,
+        0 2px 8px rgba(0, 0, 0, 0.25);
+      text-align: left;
+    }
+    .hero-label {
+      font-size: 2vw;
+      color: #ffd700;
+      font-weight: bold;
+      margin-bottom: 1.2em;
+      text-shadow:
+        0 2px 8px #e67e22,
+        0 2px 8px rgba(0, 0, 0, 0.18);
+    }
+    .hero-furigana {
+      font-size: 1.5vw;
+      color: #fff;
+      margin-bottom: 0.2em;
+      letter-spacing: 0.1em;
+      text-shadow:
+        0 2px 8px #e67e22,
+        0 2px 8px rgba(0, 0, 0, 0.18);
+    }
+    .hero-name {
+      font-size: 7vw;
+      font-weight: 900;
+      margin: 0 0 0.5em 0;
+      letter-spacing: 0.05em;
+      color: #fff;
+      text-shadow:
+        0 4px 24px #e67e22,
+        0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    .hero-catch {
+      font-size: 2vw;
+      margin-bottom: 2em;
+      color: #fff;
+      text-shadow:
+        0 4px 24px #e67e22,
+        0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    @media (max-width: 900px) {
+      .hero-text {
+        width: 100vw;
+        min-width: 0;
+        padding-left: 2vw;
+        padding-top: 12vh;
+      }
+      .hero-label {
+        font-size: 1.2rem;
+      }
+      .hero-furigana {
+        font-size: 1rem;
+      }
+      .hero-name {
+        font-size: 2.2rem;
+      }
+      .hero-catch {
+        font-size: 1rem;
+      }
+    }
+  </style>
+  <script>
+    let idx = 0;
+    const images =
+      typeof window !== "undefined"
+        ? document.querySelectorAll(".hero-bg-image")
+        : [];
+    if (images.length > 1) {
+      setInterval(() => {
+        images.forEach((img, i) => img.classList.toggle("active", i === idx));
+        idx = (idx + 1) % images.length;
+      }, 4000);
+    }
+  </script>
+</main>
