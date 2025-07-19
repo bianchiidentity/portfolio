@@ -5,10 +5,8 @@
 <header class="header">
   <div class="header-content">
     <div class="header-left">
-      <h1 class="name">川﨑浩史</h1>
-      <div class="titles">
-        <p>Webエンジニア</p>
-      </div>
+      <h1 class="name brush-name">川﨑浩史</h1>
+      <span class="job-title">Webエンジニア</span>
     </div>
     <nav class="header-nav">
       <ul class="nav-list">
@@ -38,7 +36,7 @@
 
 <style>
   .header {
-    background-color: #f8f5f0;
+    background: linear-gradient(90deg, #f8f5f0 60%, #ffe4b5 100%);
     width: 100%;
     position: fixed;
     top: 0;
@@ -46,56 +44,98 @@
     z-index: 1000;
     margin-top: 0;
     border-bottom: 2px solid #d0d0d0;
+    box-shadow: 0 4px 16px rgba(230, 103, 34, 0.08);
+    height: 10vh;
+    min-height: 70px;
   }
   .header-content {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0.7rem 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+    justify-content: space-between;
+    padding: 0 5vw;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    background: #fcfaf6;
+    height: 100%;
   }
   .header-left {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.7vw;
     z-index: 101;
+    position: relative;
+    margin-left: 0;
   }
   .name {
-    font-size: 2.2rem;
-    font-weight: bold;
+    font-size: 2.8rem;
+    font-weight: 900;
     color: #222;
     margin: 0;
     line-height: 1.1;
+    letter-spacing: 0.04em;
+    position: relative;
+    z-index: 2;
+    font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
   }
-  .titles {
-    margin-top: 0.3em;
+  .brush-name {
+    font-size: 3.2rem;
+    font-family: inherit;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: #222;
+    text-shadow: none;
   }
-  .titles p {
-    font-size: 1rem;
-    color: #444;
-    margin: 0;
-    font-weight: normal;
+  .brush-name:hover {
+    color: #e67e22;
+    text-shadow:
+      0 0 16px #ffd9a0,
+      0 2px 0 #fff7e6;
   }
   .header-nav {
     display: flex;
     align-items: center;
+    margin-right: 0;
+    padding-right: 0;
+    position: relative;
+    right: 0;
+    max-width: 60vw;
+    justify-content: flex-end;
   }
   .nav-list {
     display: flex;
+    align-items: center;
     list-style: none;
     margin: 0;
     padding: 0;
-    gap: 2.5rem;
+    gap: 3.5rem;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
+    justify-content: flex-end;
   }
   .nav-link {
     color: #e67e22;
     text-decoration: none;
-    font-size: 1.1rem;
-    font-weight: 500;
+    font-size: 1.7rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
     transition: color 0.2s;
+    font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
   }
   .nav-link:hover {
     color: #d35400;
+  }
+  .job-title {
+    font-size: 1.15rem;
+    color: #444;
+    margin-left: 0.7vw;
+    font-weight: 700;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+    font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
   }
 
   /* ハンバーガーメニュー */
@@ -139,7 +179,7 @@
     }
 
     .header-content {
-      padding: 1.2rem 4rem 1.2rem 2rem;
+      padding: 0.6rem 2rem 0.6rem 2rem;
     }
 
     .header-nav {
@@ -179,7 +219,7 @@
     }
 
     .nav-link {
-      font-size: 1.5rem;
+      font-size: 1.7rem;
       padding: 1.2rem 0;
       color: #e67e22;
       text-decoration: none;
@@ -187,6 +227,9 @@
       display: block;
       width: 100%;
       text-align: center;
+    }
+    .brush-name {
+      font-size: 1.2rem;
     }
   }
 </style>
