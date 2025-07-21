@@ -1,0 +1,254 @@
+---
+import { getCollection } from "astro:content";
+const histories = await getCollection("history");
+
+// ファイル名から数字を抽出してソート
+const sortedHistories = histories.sort((a, b) => {
+  const aNum = parseInt(a.id.match(/^(\d+)_/)?.[1] || "0");
+  const bNum = parseInt(b.id.match(/^(\d+)_/)?.[1] || "0");
+  return aNum - bNum;
+});
+---
+
+<section class="history-timeline">
+  {
+    sortedHistories.map((item, idx) => (
+      <div class="history-row">
+        <div
+          class="history-col history-col-left history-photo-col"
+          style="position:relative; justify-content: center; align-items: center;"
+        >
+          {item.data.images && item.data.images.length > 0 && (
+            <div class="slideshow-container" id={"slideshow-" + idx}>
+              <div class="slideshow-image-wrap">
+                <img
+                  src={item.data.images[0]}
+                  alt={item.data.era + "の写真"}
+                  class="history-photo slideshow-photo"
+                  style="transition: opacity 0.5s; opacity: 1;"
+                  data-idx="0"
+                  data-images={item.data.images.join(",")}
+                />
+              </div>
+              {item.data.images.length > 1 ? (
+                <div class="slideshow-dots">
+                  {item.data.images.map((_, i) => (
+                    <span
+                      class={i === 0 ? "dot active" : "dot"}
+                      data-dot-idx={i}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+        <div class="history-col history-col-right">
+          <h2 class="history-era">{item.data.era}</h2>
+          <div class="history-title">{item.data.title}</div>
+          <div class="history-desc">{item.data.desc}</div>
+          {item.data.url && (
+            <div style="margin-top: 0.7em;">
+              <a
+                href={item.data.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="history-link-btn"
+              >
+                関連リンクを見る
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    ))
+  }
+</section>
+
+<script is:inline>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".slideshow-container").forEach((container) => {
+      const img = container.querySelector("img.slideshow-photo");
+      const dots = container.querySelectorAll(".dot");
+      let current = 0;
+      // imgタグのdata-images属性から画像リストを取得
+      const realSrcs = img.getAttribute("data-images").split(",");
+      // 画像とドットを切り替える関数
+      function show(idx) {
+        img.style.opacity = 0;
+        setTimeout(() => {
+          img.src = realSrcs[idx];
+          img.setAttribute("data-idx", idx);
+          img.style.opacity = 1;
+        }, 200);
+        dots.forEach((dot, i) => {
+          if (i === idx) {
+            dot.classList.add("active");
+          } else {
+            dot.classList.remove("active");
+          }
+        });
+      }
+      // 自動切り替え
+      if (realSrcs.length > 1) {
+        setInterval(() => {
+          current = (current + 1) % realSrcs.length;
+          show(current);
+        }, 3000); // 3秒ごとに切り替え
+      }
+      dots.forEach((dot, i) => {
+        dot.addEventListener("click", () => {
+          current = i;
+          show(current);
+        });
+      });
+    });
+  });
+</script>
+
+<style>
+  .history-timeline {
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 1.5vw 0 2vw 0;
+    position: relative;
+  }
+  .history-photo-col {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    gap: 0.7em;
+    height: 100%;
+  }
+  .history-row {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    margin-bottom: 90px;
+    position: relative;
+    z-index: 1;
+  }
+  .history-col {
+    flex: 1 1 0;
+    padding: 0.5vw 2.5vw;
+  }
+  .history-col-left {
+    text-align: right;
+    min-width: 180px;
+    max-width: 220px;
+  }
+  .history-col-right {
+    text-align: left;
+    min-width: 420px;
+    max-width: 900px;
+  }
+  .history-era {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.4em;
+    letter-spacing: 0.02em;
+  }
+  .history-title {
+    font-size: 1.45rem;
+    font-weight: bold;
+    margin-bottom: 0.7em;
+    letter-spacing: 0.01em;
+  }
+  .history-desc {
+    font-size: 1.18rem;
+    color: #222;
+    line-height: 2.1;
+    letter-spacing: 0.01em;
+    margin-bottom: 0.2em;
+  }
+  .history-photo {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid #e0e0e0;
+    background: #fff;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    margin: 0 0.3em;
+    display: block;
+    position: relative;
+    z-index: 2;
+  }
+  .history-link-btn {
+    display: inline-block;
+    padding: 0.5em 1.2em;
+    background: #e67e22;
+    color: #fff;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.05em;
+    transition:
+      background 0.18s,
+      color 0.18s;
+    margin-top: 0.2em;
+  }
+  .history-link-btn:hover {
+    background: #d35400;
+    color: #fff;
+  }
+  .history-photo-col {
+    align-items: center;
+  }
+  .history-row:first-child {
+    margin-bottom: 0;
+  }
+  .slideshow-container {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    width: clamp(120px, 15vw, 220px); /* 画面に応じて可変 */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .slideshow-image-wrap {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+  }
+  .slideshow-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 10px solid #e0e0e0;
+    background: #fff;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    display: block;
+    position: relative;
+    z-index: 2;
+  }
+  .slideshow-dots {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.5em;
+    gap: 0.3em;
+    position: relative;
+    z-index: 3;
+  }
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    display: inline-block;
+    transition: background 0.2s;
+  }
+  .dot.active {
+    background: #e67e22;
+  }
+</style>
