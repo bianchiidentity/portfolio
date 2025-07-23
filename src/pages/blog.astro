@@ -1,48 +1,297 @@
 ---
 import Layout from "../layouts/Layout.astro";
-const posts = await Astro.glob("../content/blog/*.md");
+import { getCollection } from "astro:content";
+const posts = await getCollection("blog");
 ---
 
 <Layout>
-  <main
-    style="min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 3em; max-width: 900px; margin: 0 auto;"
-  >
-    <h1>ブログ</h1>
+  <main class="blog-container">
+    <div class="blog-header">
+      <h1 class="blog-title">ブログ</h1>
+      <p class="blog-subtitle">技術的な発見と学びの記録</p>
+    </div>
+
     {
       posts.length === 0 ? (
-        <p>記事はまだありません。</p>
+        <div class="empty-state">
+          <div class="empty-icon">📝</div>
+          <p>記事はまだありません。</p>
+          <p class="empty-subtitle">新しい記事を書く準備をしています...</p>
+        </div>
       ) : (
-        <ul style="width:100%; list-style:none; padding:0;">
-          {posts.map((post) => {
-            // slug取得: post.fileからファイル名部分のみ抽出（undefined対策）
-            let fileName = post.file ?? "";
-            let slug = fileName
-              ? fileName.split("/").pop().replace(/\.md$/, "")
-              : post.frontmatter.title.replace(/\s+/g, "-").toLowerCase();
+        <div class="posts-grid">
+          {posts.map((post, index) => {
             return (
-              <li style="margin-bottom:2.5em; border-bottom:1px solid #eee; padding-bottom:1.5em; list-style:none;">
+              <article
+                class="post-card"
+                style={`animation-delay: ${index * 0.1}s`}
+              >
                 <a
-                  href={`/blog/${slug}`}
-                  style="display:block; width:100%; padding:1.2em 1.2em 1.2em 1.2em; border-radius:14px; background:#fff; box-shadow:0 2px 12px rgba(230,126,34,0.06); transition:box-shadow 0.18s, background 0.18s; text-decoration:none; color:inherit; cursor:pointer;"
-                  aria-label={post.frontmatter.title + " の詳細ページへ"}
-                  onmouseover="this.style.boxShadow='0 6px 24px rgba(230,126,34,0.13)'; this.style.background='#fdf6ee';"
-                  onmouseout="this.style.boxShadow='0 2px 12px rgba(230,126,34,0.06)'; this.style.background='#fff';"
+                  href={`/blog/${post.slug}`}
+                  class="post-link"
+                  aria-label={post.data.title + " の詳細ページへ"}
                 >
-                  <div style="font-size:1.3em; font-weight:bold; color:#e67e22; margin-bottom:0.3em;">
-                    {post.frontmatter.title}
+                  <div class="post-header">
+                    <h2 class="post-title">{post.data.title}</h2>
+                    <div class="post-meta">
+                      <time
+                        class="post-date"
+                        datetime={post.data.date?.toISOString()}
+                      >
+                        {post.data.date?.toLocaleDateString("ja-JP", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </time>
+                      <span class="read-time">📖 5分読了</span>
+                    </div>
                   </div>
-                  <div style="color:#888; font-size:0.98em; margin:0.2em 0 0.7em 0;">
-                    {post.frontmatter.date}
-                  </div>
-                  <div style="font-size:1.08em; color:#333;">
-                    {post.frontmatter.summary}
+                  <div class="post-excerpt">{post.data.summary}</div>
+                  <div class="post-footer">
+                    <span class="read-more">続きを読む →</span>
                   </div>
                 </a>
-              </li>
+              </article>
             );
           })}
-        </ul>
+        </div>
       )
     }
   </main>
 </Layout>
+
+<style>
+  .blog-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    padding: 2rem 1rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .blog-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+  }
+
+  .blog-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .blog-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(45deg, #8b4513, #d2691e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .blog-subtitle {
+    font-size: 1.2rem;
+    color: rgba(139, 69, 19, 0.8);
+    font-weight: 300;
+    margin: 0;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(210, 105, 30, 0.2);
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: bounce 2s infinite;
+  }
+
+  .empty-state p {
+    color: #8b4513;
+    font-size: 1.2rem;
+    margin: 0.5rem 0;
+  }
+
+  .empty-subtitle {
+    opacity: 0.8;
+    font-size: 1rem !important;
+  }
+
+  .posts-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .post-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.8s ease-out both;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .post-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .post-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 2rem;
+    height: 100%;
+    transition: all 0.3s ease;
+  }
+
+  .post-link:hover {
+    text-decoration: none;
+  }
+
+  .post-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .post-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 1rem 0;
+    line-height: 1.3;
+    background: linear-gradient(45deg, #d2691e, #cd853f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .post-date {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .read-time {
+    color: #8b4513;
+    font-size: 0.85rem;
+    background: rgba(210, 105, 30, 0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+  }
+
+  .post-excerpt {
+    color: #34495e;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .post-footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .read-more {
+    color: #d2691e;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+  }
+
+  .post-card:hover .read-more {
+    color: #cd853f;
+    transform: translateX(4px);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-10px);
+    }
+    60% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .blog-title {
+      font-size: 2.5rem;
+    }
+
+    .posts-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .post-card {
+      margin: 0 1rem;
+    }
+
+    .post-link {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .blog-container {
+      padding: 1rem 0.5rem;
+    }
+
+    .blog-title {
+      font-size: 2rem;
+    }
+
+    .post-title {
+      font-size: 1.3rem;
+    }
+  }
+</style>
