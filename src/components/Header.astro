@@ -5,7 +5,9 @@
 <header class="header">
   <div class="header-content">
     <div class="header-left">
-      <h1 class="name brush-name">川﨑浩史</h1>
+      <a href="/" class="name-link">
+        <h1 class="name brush-name">川﨑浩史</h1>
+      </a>
       <span class="job-title">Webエンジニア</span>
     </div>
     <nav class="header-nav">
@@ -70,7 +72,6 @@
   }
   .name {
     font-size: 2.8rem;
-    font-weight: 900;
     color: #222;
     margin: 0;
     line-height: 1.1;
@@ -82,7 +83,6 @@
   .brush-name {
     font-size: 3.2rem;
     font-family: inherit;
-    font-weight: 900;
     letter-spacing: 0.04em;
     color: #222;
     text-shadow: none;
@@ -127,6 +127,17 @@
   .nav-link:hover {
     color: #d35400;
   }
+  .name-link {
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .name-link:hover {
+    text-decoration: none;
+    color: inherit;
+  }
+
   .job-title {
     font-size: 1.15rem;
     color: #444;
