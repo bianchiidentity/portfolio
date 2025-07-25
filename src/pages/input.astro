@@ -1,0 +1,539 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+// Basic認証の実装
+const authHeader = Astro.request.headers.get("authorization");
+const expectedUsername = import.meta.env.ADMIN_USERNAME;
+const expectedPassword = import.meta.env.ADMIN_PASSWORD;
+
+let isAuthenticated = false;
+let authError = "";
+
+if (authHeader) {
+  const encoded = authHeader.split(" ")[1];
+  if (encoded) {
+    const decoded = atob(encoded);
+    const [username, password] = decoded.split(":");
+
+    if (username === expectedUsername && password === expectedPassword) {
+      isAuthenticated = true;
+    } else {
+      authError = "認証情報が正しくありません";
+    }
+  }
+}
+
+// 認証されていない場合は401レスポンスを返す
+if (!isAuthenticated) {
+  return new Response("認証が必要です", {
+    status: 401,
+    headers: {
+      "WWW-Authenticate": 'Basic realm="Admin Access"',
+    },
+  });
+}
+
+// フォーム送信の処理
+let message = "";
+let messageType = "";
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    const dataType = formData.get("dataType") as string;
+    const date = formData.get("date") as string;
+
+    if (!dataType || !date) {
+      message = "データタイプと日付は必須です";
+      messageType = "error";
+    } else {
+      // データタイプに応じてAPIエンドポイントに送信
+      const endpoint = `/api/${dataType}`;
+      const body: any = { date };
+
+      // データタイプに応じて必要なフィールドを追加
+      switch (dataType) {
+        case "exercise":
+          body.exercise_name = formData.get("exercise_name") as string;
+          body.count = parseInt(formData.get("count") as string) || 0;
+          body.weight = parseInt(formData.get("weight") as string) || 0;
+          break;
+        case "book":
+          body.title = formData.get("title") as string;
+          body.pages_read = parseInt(formData.get("pages_read") as string) || 0;
+          break;
+        case "output":
+          body.type = formData.get("type") as string;
+          body.chars = parseInt(formData.get("chars") as string) || 0;
+          body.is_tech = formData.get("is_tech") === "true";
+          break;
+        case "sleep":
+          body.hours = parseFloat(formData.get("hours") as string) || 0;
+          break;
+      }
+
+      const response = await fetch(`${Astro.url.origin}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        message = "データが正常に保存されました！";
+        messageType = "success";
+      } else {
+        message = result.error || "エラーが発生しました";
+        messageType = "error";
+      }
+    }
+  } catch (error) {
+    console.error("フォーム送信エラー:", error);
+    message = "エラーが発生しました";
+    messageType = "error";
+  }
+}
+---
+
+<Layout>
+  <main class="input-container">
+    <div class="input-header">
+      <h1 class="input-title">📊 データ追加</h1>
+      <p class="input-subtitle">ダッシュボードに表示するデータを追加します</p>
+    </div>
+
+    {message && <div class={`message ${messageType}`}>{message}</div>}
+
+    <form method="POST" class="input-form">
+      <div class="form-group">
+        <label for="dataType" class="form-label">データタイプ *</label>
+        <select id="dataType" name="dataType" required class="form-select">
+          <option value="">データタイプを選択してください</option>
+          <option value="exercise">💪 筋トレ</option>
+          <option value="book">📚 読書</option>
+          <option value="output">✍️ アウトプット</option>
+          <option value="sleep">😴 睡眠</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="date" class="form-label">日付 *</label>
+        <input
+          type="date"
+          id="date"
+          name="date"
+          required
+          class="form-input"
+          value={new Date().toISOString().split("T")[0]}
+        />
+      </div>
+
+      <!-- 筋トレフォーム -->
+      <div id="exercise-fields" class="data-fields" style="display: none;">
+        <div class="form-group">
+          <label for="exercise_name" class="form-label">種目 *</label>
+          <select id="exercise_name" name="exercise_name" class="form-select">
+            <option value="">種目を選択してください</option>
+            <option value="デッドリフト">デッドリフト</option>
+            <option value="スクワット">スクワット</option>
+            <option value="ベンチプレス">ベンチプレス</option>
+            <option value="チェストプレス">チェストプレス</option>
+            <option value="ショルダープレス">ショルダープレス</option>
+            <option value="チンニング">チンニング</option>
+            <option value="ラットプル">ラットプル</option>
+            <option value="レッグプレス">レッグプレス</option>
+            <option value="ダンベルカール">ダンベルカール</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="count" class="form-label">回数</label>
+            <input
+              type="number"
+              id="count"
+              name="count"
+              min="0"
+              class="form-input"
+              placeholder="回数"
+            />
+          </div>
+          <div class="form-group">
+            <label for="weight" class="form-label">重量(kg)</label>
+            <input
+              type="number"
+              id="weight"
+              name="weight"
+              min="0"
+              step="0.5"
+              class="form-input"
+              placeholder="重量"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- 読書フォーム -->
+      <div id="book-fields" class="data-fields" style="display: none;">
+        <div class="form-group">
+          <label for="title" class="form-label">タイトル *</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            class="form-input"
+            placeholder="本のタイトルを入力してください"
+          />
+        </div>
+        <div class="form-group">
+          <label for="pages_read" class="form-label">読んだページ数</label>
+          <input
+            type="number"
+            id="pages_read"
+            name="pages_read"
+            min="0"
+            class="form-input"
+            placeholder="ページ数"
+          />
+        </div>
+      </div>
+
+      <!-- アウトプットフォーム -->
+      <div id="output-fields" class="data-fields" style="display: none;">
+        <div class="form-group">
+          <label for="type" class="form-label">種類 *</label>
+          <input
+            type="text"
+            id="type"
+            name="type"
+            class="form-input"
+            placeholder="ブログ、記事、コードなど"
+          />
+        </div>
+        <div class="form-group">
+          <label for="chars" class="form-label">文字数</label>
+          <input
+            type="number"
+            id="chars"
+            name="chars"
+            min="0"
+            class="form-input"
+            placeholder="文字数"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">技術系コンテンツ</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                name="is_tech"
+                value="true"
+                class="checkbox-input"
+              />
+              <span class="checkbox-text">技術系コンテンツ</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 睡眠フォーム -->
+      <div id="sleep-fields" class="data-fields" style="display: none;">
+        <div class="form-group">
+          <label for="hours" class="form-label">睡眠時間(時間)</label>
+          <input
+            type="number"
+            id="hours"
+            name="hours"
+            min="0"
+            max="24"
+            step="0.1"
+            class="form-input"
+            placeholder="睡眠時間"
+          />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="submit-btn"> 📤 データを保存 </button>
+        <a href="/dashboard" class="cancel-btn"> ❌ キャンセル </a>
+      </div>
+    </form>
+  </main>
+</Layout>
+
+<script>
+  // データタイプの選択に応じてフォームフィールドを表示/非表示
+  document.addEventListener("DOMContentLoaded", function () {
+    const dataTypeSelect = document.getElementById(
+      "dataType"
+    ) as HTMLSelectElement;
+    const dataFields = document.querySelectorAll(".data-fields");
+
+    dataTypeSelect.addEventListener("change", function () {
+      // すべてのフィールドを非表示
+      dataFields.forEach((field) => {
+        (field as HTMLElement).style.display = "none";
+      });
+
+      // 選択されたデータタイプのフィールドを表示
+      const selectedType = this.value;
+      if (selectedType) {
+        const targetField = document.getElementById(`${selectedType}-fields`);
+        if (targetField) {
+          targetField.style.display = "block";
+        }
+      }
+    });
+  });
+</script>
+
+<style>
+  .input-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem 1rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .input-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+  }
+
+  .input-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .input-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .input-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 300;
+    margin: 0;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+
+  .message {
+    max-width: 800px;
+    margin: 0 auto 2rem auto;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .message.success {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #166534;
+  }
+
+  .message.error {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #991b1b;
+  }
+
+  .input-form {
+    max-width: 800px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.8s ease-out 0.4s both;
+  }
+
+  .form-group {
+    margin-bottom: 2rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .form-input,
+  .form-select {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+    font-family: inherit;
+  }
+
+  .form-input:focus,
+  .form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #374151;
+  }
+
+  .checkbox-input {
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: #667eea;
+  }
+
+  .checkbox-text {
+    font-weight: 500;
+  }
+
+  .data-fields {
+    background: rgba(102, 126, 234, 0.05);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .submit-btn,
+  .cancel-btn {
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .submit-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .cancel-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 2px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .cancel-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateY(-2px);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .input-title {
+      font-size: 2.5rem;
+    }
+
+    .input-form {
+      margin: 0 1rem;
+      padding: 2rem 1.5rem;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .submit-btn,
+    .cancel-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .input-container {
+      padding: 1rem 0.5rem;
+    }
+
+    .input-title {
+      font-size: 2rem;
+    }
+
+    .input-form {
+      padding: 1.5rem 1rem;
+    }
+  }
+</style>
