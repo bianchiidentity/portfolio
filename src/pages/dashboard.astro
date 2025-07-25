@@ -1,24 +1,39 @@
 ---
 import Layout from "../layouts/Layout.astro";
 
-const fetchData = async (endpoint) => {
+const fetchData = async (endpoint, locals) => {
   try {
-    // 環境変数でbaseUrlを切り替え
-    const baseUrl = import.meta.env.PUBLIC_API_BASE_URL || "";
-    const res = await fetch(`${baseUrl}${endpoint}`);
-    if (!res.ok) return [];
-    return await res.json();
+    // Cloudflare Workers環境での環境変数アクセス
+    const runtime = locals?.runtime;
+    const env = runtime?.env;
+    const PUBLIC_API_BASE_URL = env?.PUBLIC_API_BASE_URL;
+    const baseUrl = PUBLIC_API_BASE_URL || "";
+    const url = `${baseUrl}${endpoint}`;
+    console.log(`Fetching data from: ${url}`);
+
+    const res = await fetch(url);
+    console.log(`Response status: ${res.status} for ${endpoint}`);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`API error for ${endpoint}:`, res.status, errorText);
+      return [];
+    }
+
+    const data = await res.json();
+    console.log(`Data received for ${endpoint}:`, data.length || 0, "items");
+    return data;
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error(`Fetch error for ${endpoint}:`, error);
     return [];
   }
 };
 
 const [exercises, books, outputs, sleeps] = await Promise.all([
-  fetchData("/api/exercise"),
-  fetchData("/api/book"),
-  fetchData("/api/output"),
-  fetchData("/api/sleep"),
+  fetchData("/api/exercise", Astro.locals),
+  fetchData("/api/book", Astro.locals),
+  fetchData("/api/output", Astro.locals),
+  fetchData("/api/sleep", Astro.locals),
 ]);
 
 // 筋トレ統計の計算
