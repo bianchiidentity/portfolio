@@ -14,4 +14,4 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "lifelog"
-database_id = "${D1_DATABASE_ID}"
+database_id = "4409121c-e368-4ff6-8d42-44e5ac95658a"
