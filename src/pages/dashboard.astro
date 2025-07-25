@@ -8,6 +8,17 @@ const fetchData = async (endpoint, locals) => {
     const env = runtime?.env;
     const PUBLIC_API_BASE_URL = env?.PUBLIC_API_BASE_URL;
     const baseUrl = PUBLIC_API_BASE_URL || "";
+
+    // デバッグ情報を出力
+    console.log("Debug info:", {
+      hasRuntime: !!runtime,
+      hasEnv: !!env,
+      PUBLIC_API_BASE_URL,
+      baseUrl,
+      endpoint,
+      localsKeys: Object.keys(locals || {}),
+    });
+
     const url = `${baseUrl}${endpoint}`;
     console.log(`Fetching data from: ${url}`);
 
