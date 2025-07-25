@@ -1,0 +1,520 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const fetchData = async (endpoint) => {
+  try {
+    // 環境変数でbaseUrlを切り替え
+    const baseUrl = import.meta.env.PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${baseUrl}${endpoint}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    return [];
+  }
+};
+
+const [exercises, books, outputs, sleeps] = await Promise.all([
+  fetchData("/api/exercise"),
+  fetchData("/api/book"),
+  fetchData("/api/output"),
+  fetchData("/api/sleep"),
+]);
+
+// 筋トレ統計の計算
+const exerciseStats = exercises.reduce((acc, e) => {
+  if (!acc[e.exercise_name]) {
+    acc[e.exercise_name] = {
+      totalCount: 0,
+      maxWeight: 0,
+      dates: new Set(),
+    };
+  }
+  acc[e.exercise_name].totalCount += e.count || 0;
+  acc[e.exercise_name].maxWeight = Math.max(
+    acc[e.exercise_name].maxWeight,
+    e.weight || 0
+  );
+  acc[e.exercise_name].dates.add(e.date);
+  return acc;
+}, {});
+
+const totalWeight = exercises.reduce((sum, e) => sum + (e.weight || 0), 0);
+const totalPages = books.reduce((sum, b) => sum + (b.pages_read || 0), 0);
+const totalOutputChars = outputs.reduce((sum, o) => sum + (o.chars || 0), 0);
+const avgSleep =
+  sleeps.length > 0
+    ? (
+        sleeps.reduce((sum, s) => sum + (s.hours || 0), 0) / sleeps.length
+      ).toFixed(1)
+    : 0;
+
+// 筋トレ日数の計算（重複日付を除外）
+const uniqueExerciseDates = new Set(exercises.map((e) => e.date));
+const exerciseDays = uniqueExerciseDates.size;
+---
+
+<Layout>
+  <main class="dashboard">
+    <div class="container">
+      <header class="dashboard-header">
+        <h1>📊 ライフダッシュボード</h1>
+        <p class="subtitle">日々の活動を可視化（入力フォームは非公開）</p>
+      </header>
+
+      <div class="dashboard-layout">
+        <div class="main-content">
+          <section class="exercise-stats">
+            <h2>💪 筋トレ統計</h2>
+            <div class="exercise-grid">
+              {
+                Object.entries(exerciseStats).map(([name, stats]) => (
+                  <div class="exercise-card">
+                    <div class="exercise-icon">
+                      {name === "デッドリフト"
+                        ? "🏋️"
+                        : name === "スクワット"
+                          ? "🦵"
+                          : name === "ベンチプレス"
+                            ? "💪"
+                            : name === "チェストプレス"
+                              ? "🏋️‍♂️"
+                              : name === "ショルダープレス"
+                                ? "🤲"
+                                : name === "チンニング"
+                                  ? "🧗"
+                                  : name === "ラットプル"
+                                    ? "🎯"
+                                    : name === "スクワット"
+                                      ? "🦵"
+                                      : name === "レッグプレス"
+                                        ? "🦿"
+                                        : name === "ダンベルカール"
+                                          ? "💪"
+                                          : "🏋️"}
+                    </div>
+                    <div class="exercise-info">
+                      <div class="exercise-name">{name}</div>
+                      <div class="exercise-stats-details">
+                        <span class="stat-badge">回数: {stats.totalCount}</span>
+                        <span class="stat-badge">
+                          重量: {stats.maxWeight}kg
+                        </span>
+                        <span class="stat-badge">日数: {stats.dates.size}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </section>
+
+          <section class="data-table">
+            <h2>筋トレ記録（詳細）</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>種目</th>
+                  <th>回数</th>
+                  <th>重量(kg)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  exercises.map((e) => (
+                    <tr>
+                      <td>{e.date}</td>
+                      <td>{e.exercise_name}</td>
+                      <td>{e.count}</td>
+                      <td>{e.weight}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </section>
+
+          <section class="data-table">
+            <h2>読書記録</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>タイトル</th>
+                  <th>ページ数</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  books.map((b) => (
+                    <tr>
+                      <td>{b.date}</td>
+                      <td>{b.title}</td>
+                      <td>{b.pages_read}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </section>
+
+          <section class="data-table">
+            <h2>アウトプット記録</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>種類</th>
+                  <th>文字数</th>
+                  <th>技術系</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  outputs.map((o) => (
+                    <tr>
+                      <td>{o.date}</td>
+                      <td>{o.type}</td>
+                      <td>{o.chars}</td>
+                      <td>{o.is_tech ? "技術" : "一般"}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </section>
+
+          <section class="data-table">
+            <h2>睡眠記録</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>睡眠時間(時間)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  sleeps.map((s) => (
+                    <tr>
+                      <td>{s.date}</td>
+                      <td>{s.hours}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <div class="sidebar">
+          <section class="stats-card">
+            <h2>📊 統計サマリー</h2>
+            <div class="stat-item">
+              <div class="stat-icon">💪</div>
+              <div class="stat-content">
+                <div class="stat-value">{exerciseDays}</div>
+                <div class="stat-label">筋トレ日数</div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">📚</div>
+              <div class="stat-content">
+                <div class="stat-value">{totalPages}</div>
+                <div class="stat-label">読書ページ数</div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">✍️</div>
+              <div class="stat-content">
+                <div class="stat-value">{totalOutputChars}</div>
+                <div class="stat-label">アウトプット文字数</div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">😴</div>
+              <div class="stat-content">
+                <div class="stat-value">{avgSleep}</div>
+                <div class="stat-label">平均睡眠時間</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="recent-log">
+            <h2>📝 最近のログ</h2>
+            <div class="log-items">
+              {
+                exercises.slice(0, 3).map((e) => (
+                  <div class="log-item">
+                    <div class="log-date">{e.date}</div>
+                    <div class="log-content">
+                      <div class="log-title">💪 {e.exercise_name}</div>
+                      <div class="log-details">
+                        {e.count}回 × {e.weight}kg
+                      </div>
+                    </div>
+                  </div>
+                ))
+              }
+              {
+                books.slice(0, 2).map((b) => (
+                  <div class="log-item">
+                    <div class="log-date">{b.date}</div>
+                    <div class="log-content">
+                      <div class="log-title">📚 {b.title}</div>
+                      <div class="log-details">{b.pages_read}ページ</div>
+                    </div>
+                  </div>
+                ))
+              }
+              {
+                outputs.slice(0, 2).map((o) => (
+                  <div class="log-item">
+                    <div class="log-date">{o.date}</div>
+                    <div class="log-content">
+                      <div class="log-title">✍️ {o.type}</div>
+                      <div class="log-details">{o.chars}文字</div>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .dashboard {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem 0;
+  }
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  .dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: white;
+  }
+  .dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+  .subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+  .dashboard-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+    align-items: start;
+  }
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: sticky;
+    top: 2rem;
+  }
+  .data-table {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    overflow-x: auto;
+  }
+  .data-table h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.3rem;
+  }
+  .exercise-stats {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+  .exercise-stats h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.3rem;
+  }
+  .exercise-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .exercise-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .exercise-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .exercise-icon {
+    font-size: 2.5rem;
+    width: 60px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .exercise-info {
+    flex: 1;
+  }
+  .exercise-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+  .exercise-stats-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .stat-badge {
+    background: #667eea;
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  th,
+  td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+  }
+  th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+  }
+  tr:hover {
+    background: #f6f8fa;
+  }
+  .stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+  .stats-card h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.3rem;
+    text-align: center;
+  }
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .stat-item:last-child {
+    border-bottom: none;
+  }
+  .stat-icon {
+    font-size: 2rem;
+    width: 50px;
+    text-align: center;
+  }
+  .stat-content {
+    flex: 1;
+  }
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.2rem;
+  }
+  .recent-log {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+  .recent-log h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.3rem;
+    text-align: center;
+  }
+  .log-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .log-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+  }
+  .log-date {
+    font-size: 0.8rem;
+    color: #666;
+    white-space: nowrap;
+    min-width: 80px;
+  }
+  .log-content {
+    flex: 1;
+  }
+  .log-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.2rem;
+  }
+  .log-details {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  @media (max-width: 1024px) {
+    .dashboard-layout {
+      grid-template-columns: 1fr;
+    }
+    .sidebar {
+      position: static;
+    }
+  }
+</style>
