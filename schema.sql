@@ -1,6 +1,4 @@
 -- 既存テーブル削除（初期化用）
-DROP TABLE IF EXISTS exercise_master;
-
 DROP TABLE IF EXISTS exercise;
 
 DROP TABLE IF EXISTS book;
@@ -8,33 +6,6 @@ DROP TABLE IF EXISTS book;
 DROP TABLE IF EXISTS output;
 
 DROP TABLE IF EXISTS sleep;
-
--- 種目マスタテーブル
-CREATE TABLE IF NOT EXISTS exercise_master (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    display_order INTEGER DEFAULT 0
-);
-
--- サンプル種目（部位ごとに順番を調整）
-INSERT
-    OR IGNORE INTO exercise_master (name, display_order)
-VALUES ('ベンチプレス', 1),
-    ('チェストプレス', 2),
-    ('ペックフライ', 3),
-    ('ショルダープレス', 4),
-    ('リアデルト', 5),
-    ('チンニング', 6),
-    ('ラットプル', 7),
-    ('ケーブルローイング', 8),
-    ('スクワット', 9),
-    ('レッグプレス', 10),
-    ('レッグカール', 11),
-    ('レッグエクステンション', 12),
-    ('アダクター', 13),
-    ('アブダクター', 14),
-    ('ダンベルカール', 15),
-    ('デッドリフト', 16);
 
 -- トレーニング記録テーブル
 CREATE TABLE IF NOT EXISTS exercise (

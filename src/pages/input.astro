@@ -1,9 +1,29 @@
 ---
 import Layout from "../layouts/Layout.astro";
 
+// 種目リスト
+const EXERCISE_LIST = [
+  { id: 1, name: "ベンチプレス", displayOrder: 1 },
+  { id: 2, name: "チェストプレス", displayOrder: 2 },
+  { id: 3, name: "ペックフライ", displayOrder: 3 },
+  { id: 4, name: "ショルダープレス", displayOrder: 4 },
+  { id: 5, name: "リアデルト", displayOrder: 5 },
+  { id: 6, name: "チンニング", displayOrder: 6 },
+  { id: 7, name: "ラットプル", displayOrder: 7 },
+  { id: 8, name: "ケーブルローイング", displayOrder: 8 },
+  { id: 9, name: "スクワット", displayOrder: 9 },
+  { id: 10, name: "レッグプレス", displayOrder: 10 },
+  { id: 11, name: "レッグカール", displayOrder: 11 },
+  { id: 12, name: "レッグエクステンション", displayOrder: 12 },
+  { id: 13, name: "アダクター", displayOrder: 13 },
+  { id: 14, name: "アブダクター", displayOrder: 14 },
+  { id: 15, name: "ダンベルカール", displayOrder: 15 },
+  { id: 16, name: "デッドリフト", displayOrder: 16 },
+].sort((a, b) => a.displayOrder - b.displayOrder);
+
 // Basic認証の実装
 const authHeader = Astro.request.headers.get("authorization");
-const locals = Astro.locals as any;
+const locals = Astro.locals;
 const expectedUsername = locals?.runtime?.env?.ADMIN_USERNAME;
 const expectedPassword = locals?.runtime?.env?.ADMIN_PASSWORD;
 
@@ -41,15 +61,14 @@ let messageType = "";
 if (Astro.request.method === "POST") {
   try {
     const formData = await Astro.request.formData();
-    const dataType = formData.get("dataType") as string;
-    const date = formData.get("date") as string;
+    const dataType = formData.get("dataType");
+    const date = formData.get("date");
 
     if (!dataType || !date) {
       message = "データタイプと日付は必須です";
       messageType = "error";
     } else {
       // 直接データベースにアクセス
-      const locals = Astro.locals as any;
       const DB = locals?.runtime?.env?.DB;
 
       if (!DB) {
@@ -60,10 +79,10 @@ if (Astro.request.method === "POST") {
           // データタイプに応じてデータベースに保存
           switch (dataType) {
             case "exercise":
-              const exercise_name = formData.get("exercise_name") as string;
-              const count = parseInt(formData.get("count") as string) || 0;
-              const weight = parseInt(formData.get("weight") as string) || 0;
-              
+              const exercise_name = formData.get("exercise_name");
+              const count = parseInt(formData.get("count") || "0");
+              const weight = parseInt(formData.get("weight") || "0");
+
               if (!exercise_name) {
                 message = "種目は必須です";
                 messageType = "error";
@@ -79,9 +98,9 @@ if (Astro.request.method === "POST") {
               break;
 
             case "book":
-              const title = formData.get("title") as string;
-              const pages_read = parseInt(formData.get("pages_read") as string) || 0;
-              
+              const title = formData.get("title");
+              const pages_read = parseInt(formData.get("pages_read") || "0");
+
               if (!title) {
                 message = "タイトルは必須です";
                 messageType = "error";
@@ -97,10 +116,10 @@ if (Astro.request.method === "POST") {
               break;
 
             case "output":
-              const type = formData.get("type") as string;
-              const chars = parseInt(formData.get("chars") as string) || 0;
+              const type = formData.get("type");
+              const chars = parseInt(formData.get("chars") || "0");
               const is_tech = formData.get("is_tech") === "true";
-              
+
               if (!type) {
                 message = "種類は必須です";
                 messageType = "error";
@@ -116,8 +135,8 @@ if (Astro.request.method === "POST") {
               break;
 
             case "sleep":
-              const hours = parseFloat(formData.get("hours") as string) || 0;
-              
+              const hours = parseFloat(formData.get("hours") || "0");
+
               await DB.prepare(
                 `INSERT INTO sleep (date, hours, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
               )
@@ -185,15 +204,11 @@ if (Astro.request.method === "POST") {
           <label for="exercise_name" class="form-label">種目 *</label>
           <select id="exercise_name" name="exercise_name" class="form-select">
             <option value="">種目を選択してください</option>
-            <option value="デッドリフト">デッドリフト</option>
-            <option value="スクワット">スクワット</option>
-            <option value="ベンチプレス">ベンチプレス</option>
-            <option value="チェストプレス">チェストプレス</option>
-            <option value="ショルダープレス">ショルダープレス</option>
-            <option value="チンニング">チンニング</option>
-            <option value="ラットプル">ラットプル</option>
-            <option value="レッグプレス">レッグプレス</option>
-            <option value="ダンベルカール">ダンベルカール</option>
+            {
+              EXERCISE_LIST.map((exercise) => (
+                <option value={exercise.name}>{exercise.name}</option>
+              ))
+            }
           </select>
         </div>
         <div class="form-row">
@@ -315,15 +330,13 @@ if (Astro.request.method === "POST") {
 <script>
   // データタイプの選択に応じてフォームフィールドを表示/非表示
   document.addEventListener("DOMContentLoaded", function () {
-    const dataTypeSelect = document.getElementById(
-      "dataType"
-    ) as HTMLSelectElement;
+    const dataTypeSelect = document.getElementById("dataType");
     const dataFields = document.querySelectorAll(".data-fields");
 
     dataTypeSelect.addEventListener("change", function () {
       // すべてのフィールドを非表示
       dataFields.forEach((field) => {
-        (field as HTMLElement).style.display = "none";
+        field.style.display = "none";
       });
 
       // 選択されたデータタイプのフィールドを表示
