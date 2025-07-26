@@ -3,8 +3,9 @@ import Layout from "../layouts/Layout.astro";
 
 // Basic認証の実装
 const authHeader = Astro.request.headers.get("authorization");
-const expectedUsername = import.meta.env.ADMIN_USERNAME;
-const expectedPassword = import.meta.env.ADMIN_PASSWORD;
+const locals = Astro.locals as any;
+const expectedUsername = locals?.runtime?.env?.ADMIN_USERNAME;
+const expectedPassword = locals?.runtime?.env?.ADMIN_PASSWORD;
 
 let isAuthenticated = false;
 let authError = "";
