@@ -48,47 +48,94 @@ if (Astro.request.method === "POST") {
       message = "データタイプと日付は必須です";
       messageType = "error";
     } else {
-      // データタイプに応じてAPIエンドポイントに送信
-      const endpoint = `/api/${dataType}`;
-      const body: any = { date };
+      // 直接データベースにアクセス
+      const locals = Astro.locals as any;
+      const DB = locals?.runtime?.env?.DB;
 
-      // データタイプに応じて必要なフィールドを追加
-      switch (dataType) {
-        case "exercise":
-          body.exercise_name = formData.get("exercise_name") as string;
-          body.count = parseInt(formData.get("count") as string) || 0;
-          body.weight = parseInt(formData.get("weight") as string) || 0;
-          break;
-        case "book":
-          body.title = formData.get("title") as string;
-          body.pages_read = parseInt(formData.get("pages_read") as string) || 0;
-          break;
-        case "output":
-          body.type = formData.get("type") as string;
-          body.chars = parseInt(formData.get("chars") as string) || 0;
-          body.is_tech = formData.get("is_tech") === "true";
-          break;
-        case "sleep":
-          body.hours = parseFloat(formData.get("hours") as string) || 0;
-          break;
-      }
-
-      const response = await fetch(`${Astro.url.origin}${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        message = "データが正常に保存されました！";
-        messageType = "success";
-      } else {
-        message = result.error || "エラーが発生しました";
+      if (!DB) {
+        message = "データベース接続エラー";
         messageType = "error";
+      } else {
+        try {
+          // データタイプに応じてデータベースに保存
+          switch (dataType) {
+            case "exercise":
+              const exercise_name = formData.get("exercise_name") as string;
+              const count = parseInt(formData.get("count") as string) || 0;
+              const weight = parseInt(formData.get("weight") as string) || 0;
+              
+              if (!exercise_name) {
+                message = "種目は必須です";
+                messageType = "error";
+              } else {
+                await DB.prepare(
+                  `INSERT INTO exercise (date, exercise_name, count, weight, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
+                )
+                  .bind(date, exercise_name, count, weight)
+                  .run();
+                message = "筋トレデータが正常に保存されました！";
+                messageType = "success";
+              }
+              break;
+
+            case "book":
+              const title = formData.get("title") as string;
+              const pages_read = parseInt(formData.get("pages_read") as string) || 0;
+              
+              if (!title) {
+                message = "タイトルは必須です";
+                messageType = "error";
+              } else {
+                await DB.prepare(
+                  `INSERT INTO book (date, title, pages_read, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
+                )
+                  .bind(date, title, pages_read)
+                  .run();
+                message = "読書データが正常に保存されました！";
+                messageType = "success";
+              }
+              break;
+
+            case "output":
+              const type = formData.get("type") as string;
+              const chars = parseInt(formData.get("chars") as string) || 0;
+              const is_tech = formData.get("is_tech") === "true";
+              
+              if (!type) {
+                message = "種類は必須です";
+                messageType = "error";
+              } else {
+                await DB.prepare(
+                  `INSERT INTO output (date, type, chars, is_tech, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
+                )
+                  .bind(date, type, chars, is_tech ? 1 : 0)
+                  .run();
+                message = "アウトプットデータが正常に保存されました！";
+                messageType = "success";
+              }
+              break;
+
+            case "sleep":
+              const hours = parseFloat(formData.get("hours") as string) || 0;
+              
+              await DB.prepare(
+                `INSERT INTO sleep (date, hours, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
+              )
+                .bind(date, hours)
+                .run();
+              message = "睡眠データが正常に保存されました！";
+              messageType = "success";
+              break;
+
+            default:
+              message = "無効なデータタイプです";
+              messageType = "error";
+          }
+        } catch (dbError) {
+          console.error("データベースエラー:", dbError);
+          message = "データベースエラーが発生しました";
+          messageType = "error";
+        }
       }
     }
   } catch (error) {
