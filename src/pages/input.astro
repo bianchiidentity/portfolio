@@ -1,25 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-
-// 種目リスト
-const EXERCISE_LIST = [
-  { id: 1, name: "ベンチプレス", displayOrder: 1 },
-  { id: 2, name: "チェストプレス", displayOrder: 2 },
-  { id: 3, name: "ペックフライ", displayOrder: 3 },
-  { id: 4, name: "ショルダープレス", displayOrder: 4 },
-  { id: 5, name: "リアデルト", displayOrder: 5 },
-  { id: 6, name: "チンニング", displayOrder: 6 },
-  { id: 7, name: "ラットプル", displayOrder: 7 },
-  { id: 8, name: "ケーブルローイング", displayOrder: 8 },
-  { id: 9, name: "スクワット", displayOrder: 9 },
-  { id: 10, name: "レッグプレス", displayOrder: 10 },
-  { id: 11, name: "レッグカール", displayOrder: 11 },
-  { id: 12, name: "レッグエクステンション", displayOrder: 12 },
-  { id: 13, name: "アダクター", displayOrder: 13 },
-  { id: 14, name: "アブダクター", displayOrder: 14 },
-  { id: 15, name: "ダンベルカール", displayOrder: 15 },
-  { id: 16, name: "デッドリフト", displayOrder: 16 },
-].sort((a, b) => a.displayOrder - b.displayOrder);
+import { EXERCISE_LIST } from "../consts/exercises";
 
 // Basic認証の実装
 const authHeader = Astro.request.headers.get("authorization");
