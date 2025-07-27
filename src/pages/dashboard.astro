@@ -1,7 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
 
-// 種目リスト（アイコン付き）
 const EXERCISE_LIST = [
   { id: 1, name: "ベンチプレス", displayOrder: 1, icon: "💪" },
   { id: 2, name: "チェストプレス", displayOrder: 2, icon: "🏋️‍♂️" },
@@ -34,116 +33,173 @@ const DB = locals?.runtime?.env?.DB;
 let exerciseData = [];
 let bookData = [];
 let outputData = [];
-let sleepData = [];
 
 if (DB) {
   try {
     // 筋トレデータ
     const exerciseResult = await DB.prepare(
-      "SELECT * FROM exercise ORDER BY date DESC LIMIT 30"
+      "SELECT * FROM exercise ORDER BY date DESC LIMIT 50"
     ).all();
     exerciseData = exerciseResult.results || [];
+    console.log("筋トレデータ:", exerciseData.length, "件");
 
     // 読書データ
     const bookResult = await DB.prepare(
-      "SELECT * FROM book ORDER BY date DESC LIMIT 30"
+      "SELECT * FROM book ORDER BY date DESC LIMIT 50"
     ).all();
     bookData = bookResult.results || [];
+    console.log("読書データ:", bookData.length, "件");
 
     // アウトプットデータ
     const outputResult = await DB.prepare(
-      "SELECT * FROM output ORDER BY date DESC LIMIT 30"
+      "SELECT * FROM output ORDER BY date DESC LIMIT 50"
     ).all();
     outputData = outputResult.results || [];
-
-    // 睡眠データ
-    const sleepResult = await DB.prepare(
-      "SELECT * FROM sleep ORDER BY date DESC LIMIT 30"
-    ).all();
-    sleepData = sleepResult.results || [];
+    console.log("アウトプットデータ:", outputData.length, "件");
   } catch (error) {
     console.error("データベースエラー:", error);
   }
+} else {
+  console.log("データベース接続エラー: DBが見つかりません");
 }
 
 // 筋トレ統計の計算
 const exerciseStats = {};
+const exerciseMaxRecords = {};
 exerciseData.forEach((item) => {
-  const name = item.exercise_name;
+  const name = (item as any).exercise_name;
   if (!exerciseStats[name]) {
     exerciseStats[name] = {
       name,
       totalCount: 0,
       totalWeight: 0,
       sessions: 0,
+      lastDate: null,
     };
   }
-  exerciseStats[name].totalCount += item.count || 0;
-  exerciseStats[name].totalWeight += item.weight || 0;
+  exerciseStats[name].totalCount += (item as any).count || 0;
+  exerciseStats[name].totalWeight += (item as any).weight || 0;
   exerciseStats[name].sessions += 1;
+
+  // 最大記録の更新
+  if (!exerciseMaxRecords[name]) {
+    exerciseMaxRecords[name] = {
+      maxWeight: 0,
+      maxCount: 0,
+    };
+  }
+  if (((item as any).weight || 0) > exerciseMaxRecords[name].maxWeight) {
+    exerciseMaxRecords[name].maxWeight = (item as any).weight || 0;
+  }
+  if (((item as any).count || 0) > exerciseMaxRecords[name].maxCount) {
+    exerciseMaxRecords[name].maxCount = (item as any).count || 0;
+  }
+
+  // 最新日付の更新
+  if (
+    !exerciseStats[name].lastDate ||
+    (item as any).date > exerciseStats[name].lastDate
+  ) {
+    exerciseStats[name].lastDate = (item as any).date;
+  }
 });
 
 const exerciseStatsArray = Object.values(exerciseStats).sort(
-  (a, b) => (b as any).sessions - (a as any).sessions
+  (a, b) => ((b as any).sessions || 0) - ((a as any).sessions || 0)
 );
 
 // 読書統計の計算
 const bookStats = {};
 bookData.forEach((item) => {
-  const title = item.title;
+  const title = (item as any).title;
   if (!bookStats[title]) {
     bookStats[title] = {
       title,
       totalPages: 0,
       sessions: 0,
+      lastDate: null,
     };
   }
-  bookStats[title].totalPages += item.pages_read || 0;
+  bookStats[title].totalPages += (item as any).pages_read || 0;
   bookStats[title].sessions += 1;
+
+  // 最新日付の更新
+  if (
+    !bookStats[title].lastDate ||
+    (item as any).date > bookStats[title].lastDate
+  ) {
+    bookStats[title].lastDate = (item as any).date;
+  }
 });
 
 const bookStatsArray = Object.values(bookStats).sort(
-  (a, b) => b.sessions - a.sessions
+  (a, b) => ((b as any).sessions || 0) - ((a as any).sessions || 0)
 );
 
 // アウトプット統計の計算
 const outputStats = {};
 outputData.forEach((item) => {
-  const type = item.type;
+  const type = (item as any).type;
   if (!outputStats[type]) {
     outputStats[type] = {
       type,
       totalChars: 0,
       sessions: 0,
       techCount: 0,
+      lastDate: null,
     };
   }
-  outputStats[type].totalChars += item.chars || 0;
+  outputStats[type].totalChars += (item as any).chars || 0;
   outputStats[type].sessions += 1;
-  if (item.is_tech) {
+  if ((item as any).is_tech) {
     outputStats[type].techCount += 1;
+  }
+
+  // 最新日付の更新
+  if (
+    !outputStats[type].lastDate ||
+    (item as any).date > outputStats[type].lastDate
+  ) {
+    outputStats[type].lastDate = (item as any).date;
   }
 });
 
 const outputStatsArray = Object.values(outputStats).sort(
-  (a, b) => b.sessions - a.sessions
+  (a, b) => ((b as any).sessions || 0) - ((a as any).sessions || 0)
 );
 
-// 睡眠統計の計算
-const sleepStats = {};
-sleepData.forEach((item) => {
-  const date = item.date;
-  if (!sleepStats[date]) {
-    sleepStats[date] = {
-      date,
-      hours: item.hours || 0,
-    };
+// 継続日数の計算（最新の日付から連続で記録がある日数を計算）
+function calculateStreak(data, dateField) {
+  if (data.length === 0) return 0;
+
+  const sortedData = data.sort(
+    (a, b) =>
+      new Date((b as any)[dateField] || 0) -
+      new Date((a as any)[dateField] || 0)
+  );
+  const latestDate = new Date((sortedData[0] as any)[dateField] || 0);
+  let currentDate = new Date(latestDate);
+  let streak = 0;
+
+  for (let i = 0; i < 365; i++) {
+    // 最大1年分チェック
+    const dateStr = currentDate.toISOString().split("T")[0];
+    const hasRecord = data.some((item) => (item as any)[dateField] === dateStr);
+
+    if (hasRecord) {
+      streak++;
+      currentDate.setDate((currentDate.getDate() || 0) - 1);
+    } else {
+      break;
+    }
   }
-});
 
-const sleepStatsArray = Object.values(sleepStats).sort(
-  (a, b) => new Date(b.date) - new Date(a.date)
-);
+  return streak;
+}
+
+const exerciseStreak = calculateStreak(exerciseData, "date") || 0;
+const bookStreak = calculateStreak(bookData, "date") || 0;
+const outputStreak = calculateStreak(outputData, "date") || 0;
 ---
 
 <Layout>
@@ -153,179 +209,669 @@ const sleepStatsArray = Object.values(sleepStats).sort(
       <p class="dashboard-subtitle">あなたの日々の活動を可視化</p>
     </div>
 
-    <div class="dashboard-grid">
-      <!-- 筋トレセクション -->
-      <section class="dashboard-section exercise-section">
-        <div class="section-header">
-          <h2 class="section-title">💪 筋トレ</h2>
-          <a href="/input" class="add-btn">➕ 追加</a>
-        </div>
-        <div class="exercise-stats">
-          {
-            exerciseStatsArray.length > 0 ? (
-              exerciseStatsArray.map((stat) => (
-                <div class="exercise-card">
-                  <div class="exercise-icon">{getExerciseIcon(stat.name)}</div>
-                  <div class="exercise-info">
-                    <h3 class="exercise-name">{stat.name}</h3>
-                    <div class="exercise-details">
-                      <span class="detail-item">
-                        <span class="detail-label">セッション:</span>
-                        <span class="detail-value">{stat.sessions}回</span>
-                      </span>
-                      <span class="detail-item">
-                        <span class="detail-label">総回数:</span>
-                        <span class="detail-value">{stat.totalCount}回</span>
-                      </span>
-                      <span class="detail-item">
-                        <span class="detail-label">総重量:</span>
-                        <span class="detail-value">{stat.totalWeight}kg</span>
-                      </span>
-                    </div>
-                  </div>
+    <div class="main-content">
+      <section class="summary-section">
+        <h2 class="summary-title">🏆 活動サマリー</h2>
+        <div class="summary-grid">
+          <div class="summary-card exercise-summary">
+            <div class="summary-icon">💪</div>
+            <div class="summary-content">
+              <h3 class="summary-name">筋トレ</h3>
+              <div class="summary-stats">
+                <div class="summary-stat">
+                  <span class="stat-label">総回数</span>
+                  <span class="stat-value"
+                    >{
+                      exerciseData.reduce(
+                        (sum, item) => sum + ((item as any).count || 0),
+                        0
+                      )
+                    }回</span
+                  >
                 </div>
-              ))
-            ) : (
-              <div class="empty-state">
-                <p>まだ筋トレデータがありません</p>
-                <a href="/input" class="empty-state-btn">
-                  データを追加
-                </a>
-              </div>
-            )
-          }
-        </div>
-      </section>
-
-      <!-- 読書セクション -->
-      <section class="dashboard-section book-section">
-        <div class="section-header">
-          <h2 class="section-title">📚 読書</h2>
-          <a href="/input" class="add-btn">➕ 追加</a>
-        </div>
-        <div class="book-stats">
-          {
-            bookStatsArray.length > 0 ? (
-              bookStatsArray.map((stat) => (
-                <div class="book-card">
-                  <div class="book-icon">📖</div>
-                  <div class="book-info">
-                    <h3 class="book-title">{stat.title}</h3>
-                    <div class="book-details">
-                      <span class="detail-item">
-                        <span class="detail-label">セッション:</span>
-                        <span class="detail-value">{stat.sessions}回</span>
-                      </span>
-                      <span class="detail-item">
-                        <span class="detail-label">総ページ:</span>
-                        <span class="detail-value">
-                          {stat.totalPages}ページ
+                {
+                  Object.entries(exerciseMaxRecords).map(
+                    ([exerciseName, record]) => (
+                      <div class="summary-stat">
+                        <span class="stat-label">{exerciseName}最大重量</span>
+                        <span class="stat-value">
+                          {(record as any).maxWeight}kg
                         </span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div class="empty-state">
-                <p>まだ読書データがありません</p>
-                <a href="/input" class="empty-state-btn">
-                  データを追加
-                </a>
+                      </div>
+                    )
+                  )
+                }
               </div>
-            )
-          }
+            </div>
+          </div>
+
+          <div class="summary-card book-summary">
+            <div class="summary-icon">📚</div>
+            <div class="summary-content">
+              <h3 class="summary-name">読書</h3>
+              <div class="summary-stats">
+                <div class="summary-stat">
+                  <span class="stat-label">合計日数</span>
+                  <span class="stat-value">{bookData.length}日</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="stat-label">合計冊数</span>
+                  <span class="stat-value"
+                    >{Object.keys(bookStats).length}冊</span
+                  >
+                </div>
+                <div class="summary-stat">
+                  <span class="stat-label">総ページ</span>
+                  <span class="stat-value"
+                    >{
+                      bookData.reduce(
+                        (sum, item) => sum + ((item as any).pages_read || 0),
+                        0
+                      )
+                    }ページ</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-card output-summary">
+            <div class="summary-icon">✍️</div>
+            <div class="summary-content">
+              <h3 class="summary-name">アウトプット</h3>
+              <div class="summary-stats">
+                <div class="summary-stat">
+                  <span class="stat-label">合計日数</span>
+                  <span class="stat-value">{outputData.length}日</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="stat-label">合計記事数</span>
+                  <span class="stat-value"
+                    >{Object.keys(outputStats).length}記事</span
+                  >
+                </div>
+                <div class="summary-stat">
+                  <span class="stat-label">総文字数</span>
+                  <span class="stat-value"
+                    >{
+                      outputData.reduce(
+                        (sum, item) => sum + ((item as any).chars || 0),
+                        0
+                      )
+                    }文字</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- アウトプットセクション -->
-      <section class="dashboard-section output-section">
-        <div class="section-header">
-          <h2 class="section-title">✍️ アウトプット</h2>
-          <a href="/input" class="add-btn">➕ 追加</a>
+      <!-- 右上: グラフとカレンダー -->
+      <section class="right-panel">
+        <!-- グラフセクション -->
+        <div class="charts-section">
+          <h2 class="charts-title">📈 活動グラフ</h2>
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h3 class="chart-name">読書ページ数の推移</h3>
+              <canvas id="readingChart" width="400" height="200"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3 class="chart-name">筋トレ重量の推移</h3>
+              <canvas id="exerciseChart" width="400" height="200"></canvas>
+            </div>
+          </div>
         </div>
-        <div class="output-stats">
-          {
-            outputStatsArray.length > 0 ? (
-              outputStatsArray.map((stat) => (
-                <div class="output-card">
-                  <div class="output-icon">✍️</div>
-                  <div class="output-info">
-                    <h3 class="output-type">{stat.type}</h3>
-                    <div class="output-details">
-                      <span class="detail-item">
-                        <span class="detail-label">セッション:</span>
-                        <span class="detail-value">{stat.sessions}回</span>
-                      </span>
-                      <span class="detail-item">
-                        <span class="detail-label">総文字数:</span>
-                        <span class="detail-value">{stat.totalChars}文字</span>
-                      </span>
-                      <span class="detail-item">
-                        <span class="detail-label">技術系:</span>
-                        <span class="detail-value">{stat.techCount}回</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div class="empty-state">
-                <p>まだアウトプットデータがありません</p>
-                <a href="/input" class="empty-state-btn">
-                  データを追加
-                </a>
-              </div>
-            )
-          }
-        </div>
-      </section>
 
-      <!-- 睡眠セクション -->
-      <section class="dashboard-section sleep-section">
-        <div class="section-header">
-          <h2 class="section-title">😴 睡眠</h2>
-          <a href="/input" class="add-btn">➕ 追加</a>
-        </div>
-        <div class="sleep-stats">
-          {
-            sleepStatsArray.length > 0 ? (
-              sleepStatsArray.map((stat) => (
-                <div class="sleep-card">
-                  <div class="sleep-icon">😴</div>
-                  <div class="sleep-info">
-                    <h3 class="sleep-date">{stat.date}</h3>
-                    <div class="sleep-details">
-                      <span class="detail-item">
-                        <span class="detail-label">睡眠時間:</span>
-                        <span class="detail-value">{stat.hours}時間</span>
-                      </span>
-                    </div>
+        <div class="calendar-section">
+          <h2 class="calendar-title">📅 活動カレンダー</h2>
+          <div class="calendar-card">
+            <div class="contribution-graph">
+              <div class="contribution-header">
+                <span class="contribution-title">過去1年間の活動</span>
+                <div class="contribution-legend">
+                  <span>少ない</span>
+                  <div class="legend-squares">
+                    <div class="legend-square exercise"></div>
+                    <div class="legend-square reading"></div>
+                    <div class="legend-square output"></div>
                   </div>
+                  <span>多い</span>
                 </div>
-              ))
-            ) : (
-              <div class="empty-state">
-                <p>まだ睡眠データがありません</p>
-                <a href="/input" class="empty-state-btn">
-                  データを追加
-                </a>
               </div>
-            )
-          }
+              <div class="contribution-months" id="contributionMonths"></div>
+              <div class="contribution-grid" id="contributionGrid"></div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
+
+    <!-- 詳細ログセクション -->
+    <section class="logs-section">
+      <h2 class="logs-title">📋 詳細ログ</h2>
+      <div class="logs-grid">
+        <!-- 筋トレログ -->
+        <div class="log-card exercise-log">
+          <div class="log-header">
+            <h3 class="log-title">💪 筋トレログ</h3>
+            <span class="log-count">{exerciseData.length}件</span>
+          </div>
+          <div class="log-content">
+            {
+              exerciseData.length > 0 ? (
+                exerciseData.slice(0, 10).map((item) => (
+                  <div class="log-item">
+                    <div class="log-icon">🏋️</div>
+                    <div class="log-info">
+                      <div class="log-main">
+                        <span class="log-name">{item.exercise_name}</span>
+                        <span class="log-date">{item.date}</span>
+                      </div>
+                      <div class="log-details">
+                        <span class="log-detail">
+                          {item.count || 0}回 × {item.weight || 0}kg
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div class="empty-log">
+                  <p>まだ筋トレデータがありません</p>
+                </div>
+              )
+            }
+          </div>
+        </div>
+
+        <!-- 読書ログ -->
+        <div class="log-card book-log">
+          <div class="log-header">
+            <h3 class="log-title">📚 読書ログ</h3>
+            <span class="log-count">{bookData.length}件</span>
+          </div>
+          <div class="log-content">
+            {
+              bookData.length > 0 ? (
+                bookData.slice(0, 10).map((item) => (
+                  <div class="log-item">
+                    <div class="log-icon">📖</div>
+                    <div class="log-info">
+                      <div class="log-main">
+                        <span class="log-name">{item.title}</span>
+                        <span class="log-date">{item.date}</span>
+                      </div>
+                      <div class="log-details">
+                        <span class="log-detail">
+                          {item.pages_read || 0}ページ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div class="empty-log">
+                  <p>まだ読書データがありません</p>
+                </div>
+              )
+            }
+          </div>
+        </div>
+
+        <!-- アウトプットログ -->
+        <div class="log-card output-log">
+          <div class="log-header">
+            <h3 class="log-title">✍️ アウトプットログ</h3>
+            <span class="log-count">{outputData.length}件</span>
+          </div>
+          <div class="log-content">
+            {
+              outputData.length > 0 ? (
+                outputData.slice(0, 10).map((item) => (
+                  <div class="log-item">
+                    <div class="log-icon">✍️</div>
+                    <div class="log-info">
+                      <div class="log-main">
+                        <span class="log-name">{item.type}</span>
+                        <span class="log-date">{item.date}</span>
+                      </div>
+                      <div class="log-details">
+                        <span class="log-detail">{item.chars || 0}文字</span>
+                        {item.is_tech && <span class="tech-badge">技術系</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div class="empty-log">
+                  <p>まだアウトプットデータがありません</p>
+                </div>
+              )
+            }
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script define:vars={{ exerciseData, bookData, outputData }}>
+    console.log("Chart.js loaded:", typeof Chart);
+    console.log("Exercise data:", exerciseData);
+    console.log("Book data:", bookData);
+    console.log("Output data:", outputData);
+
+    // データが空の場合はサンプルデータを使用
+    const hasBookData = bookData && bookData.length > 0;
+
+    // 読書データの準備
+    const readingChartData = {
+      labels: hasBookData
+        ? bookData.map((item) => item.date).reverse()
+        : [
+            "2024-01-01",
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+          ],
+      datasets: [
+        {
+          label: "読書ページ数",
+          data: hasBookData
+            ? bookData.map((item) => item.pages_read || 0).reverse()
+            : [20, 35, 15, 40, 25],
+          borderColor: "rgb(255, 99, 132)",
+          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          tension: 0.1,
+        },
+      ],
+    };
+
+    console.log("Reading chart data:", readingChartData);
+
+    // グラフの設定
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+      plugins: {
+        legend: {
+          display: true,
+        },
+      },
+    };
+
+    // コントリビューショングラフの作成
+    function createContributionGraph() {
+      console.log("Creating contribution graph...");
+      const grid = document.getElementById("contributionGrid");
+      const monthsContainer = document.getElementById("contributionMonths");
+      console.log("Grid element:", grid);
+      if (!grid) {
+        console.error("Contribution grid not found!");
+        return;
+      }
+
+      // 既存のコンテンツをクリア
+      grid.innerHTML = "";
+      if (monthsContainer) {
+        monthsContainer.innerHTML = "";
+      }
+
+      // 過去1年間の日付を生成（現在から過去へ）
+      const today = new Date();
+      const oneYearAgo = new Date(
+        today.getFullYear() - 1,
+        today.getMonth(),
+        today.getDate()
+      );
+
+      // 現在の日付を基準に、1年前の同じ日付から開始
+      const startDate = new Date(oneYearAgo);
+      const endDate = new Date(today);
+
+      // データを日付でグループ化（詳細な活動データ）
+      const activityData = {};
+
+      // 筋トレデータ
+      exerciseData?.forEach((item) => {
+        const date = item.date;
+        if (!activityData[date]) {
+          activityData[date] = { exercise: 0, reading: 0, output: 0 };
+        }
+        activityData[date].exercise += 1;
+      });
+
+      // 読書データ
+      bookData?.forEach((item) => {
+        const date = item.date;
+        if (!activityData[date]) {
+          activityData[date] = { exercise: 0, reading: 0, output: 0 };
+        }
+        activityData[date].reading += 1;
+      });
+
+      // アウトプットデータ
+      outputData?.forEach((item) => {
+        const date = item.date;
+        if (!activityData[date]) {
+          activityData[date] = { exercise: 0, reading: 0, output: 0 };
+        }
+        activityData[date].output += 1;
+      });
+
+      console.log("Activity data:", activityData);
+
+      // テスト用のデータを追加（デバッグ用）
+      if (Object.keys(activityData).length === 0) {
+        console.log("No activity data found, adding test data");
+        const today = new Date();
+        for (let i = 0; i < 10; i++) {
+          const testDate = new Date(today);
+          testDate.setDate(today.getDate() - i);
+          const dateStr = testDate.toISOString().split("T")[0];
+          activityData[dateStr] = {
+            exercise: Math.floor(Math.random() * 3),
+            reading: Math.floor(Math.random() * 2),
+            output: Math.floor(Math.random() * 2),
+          };
+        }
+      }
+
+      // 実際の週数を計算
+      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+      const totalWeeks = Math.ceil(daysDiff / 7);
+      const weeks = [];
+
+      for (let weekIndex = 0; weekIndex < totalWeeks; weekIndex++) {
+        const week = [];
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+          // 過去1年間の日付を計算
+          const currentDate = new Date(startDate);
+          currentDate.setDate(currentDate.getDate() + weekIndex * 7 + dayIndex);
+
+          const dateStr = currentDate.toISOString().split("T")[0];
+          const dayActivity = activityData[dateStr] || {
+            exercise: 0,
+            reading: 0,
+            output: 0,
+          };
+          const activityCount =
+            dayActivity.exercise + dayActivity.reading + dayActivity.output;
+
+          week.push({
+            date: dateStr,
+            activityCount: activityCount,
+            activities: dayActivity,
+          });
+        }
+        weeks.push(week);
+      }
+
+      // 月ラベルを生成
+      if (monthsContainer) {
+        const monthNames = [
+          "1月",
+          "2月",
+          "3月",
+          "4月",
+          "5月",
+          "6月",
+          "7月",
+          "8月",
+          "9月",
+          "10月",
+          "11月",
+          "12月",
+        ];
+
+        // 月の開始週と終了週を計算
+        const monthWeeks = {};
+        let currentMonth = -1;
+        let monthStartWeek = 0;
+
+        weeks.forEach((week, weekIndex) => {
+          const firstDayOfWeek = new Date(week[0].date);
+          const weekMonth = firstDayOfWeek.getMonth();
+
+          if (weekMonth !== currentMonth) {
+            if (currentMonth !== -1) {
+              // 前の月の情報を保存
+              monthWeeks[currentMonth] = {
+                start: monthStartWeek,
+                end: weekIndex - 1,
+                name: monthNames[currentMonth],
+              };
+            }
+            currentMonth = weekMonth;
+            monthStartWeek = weekIndex;
+          }
+        });
+
+        // 最後の月の情報を保存
+        if (currentMonth !== -1) {
+          monthWeeks[currentMonth] = {
+            start: monthStartWeek,
+            end: totalWeeks - 1,
+            name: monthNames[currentMonth],
+          };
+        }
+
+        // 月ラベルを生成
+        Object.values(monthWeeks).forEach((monthInfo) => {
+          const monthLabel = document.createElement("div");
+          monthLabel.className = "contribution-month";
+          monthLabel.textContent = monthInfo.name;
+
+          // 月の開始位置を計算（週の幅 = 19px、ギャップ = 3px）
+          const weekWidth = 19; // 16px + 3px gap
+          const containerWidth = monthsContainer.offsetWidth || 800; // フォールバック値
+          const totalWeekWidth = totalWeeks * weekWidth;
+          const scale = Math.min(1, containerWidth / totalWeekWidth);
+
+          const startPosition = monthInfo.start * weekWidth * scale + 15; // パディングを考慮
+          const monthWidth =
+            (monthInfo.end - monthInfo.start + 1) * weekWidth * scale;
+
+          monthLabel.style.position = "absolute";
+          monthLabel.style.left = `${startPosition}px`;
+          monthLabel.style.width = `${monthWidth}px`;
+          monthLabel.style.textAlign = "center";
+
+          monthsContainer.appendChild(monthLabel);
+        });
+      }
+
+      console.log("Weeks to generate:", weeks.length);
+
+      // HTMLを生成
+      weeks.forEach((week) => {
+        const weekElement = document.createElement("div");
+        weekElement.className = "contribution-week";
+
+        // グリッドの幅に合わせてスケール調整
+        const containerWidth = grid.offsetWidth || 800; // フォールバック値
+        const totalWeekWidth = totalWeeks * 19; // 19px per week
+        const scale = Math.min(1, containerWidth / totalWeekWidth);
+        const scaledGap = Math.max(1, 3 * scale); // 最小1px
+
+        weekElement.style.gap = `${scaledGap}px`;
+        weekElement.style.marginRight = `${scaledGap}px`;
+
+        week.forEach((day) => {
+          const dayElement = document.createElement("div");
+          dayElement.className = "contribution-day";
+
+          // 活動量に基づいてクラスを決定
+          if (day.activityCount === 0) {
+            dayElement.classList.add("no-activity");
+          } else if (day.activityCount === 1) {
+            dayElement.classList.add("low-activity");
+          } else if (day.activityCount === 2) {
+            dayElement.classList.add("medium-activity");
+          } else if (day.activityCount === 3) {
+            dayElement.classList.add("high-activity");
+          } else {
+            dayElement.classList.add("very-high-activity");
+          }
+
+          // グリッドの幅に合わせてスケール調整
+          const containerWidth = grid.offsetWidth || 800; // フォールバック値
+          const totalWeekWidth = totalWeeks * 19; // 19px per week
+          const scale = Math.min(1, containerWidth / totalWeekWidth);
+          const scaledSize = Math.max(8, 16 * scale); // 最小8px
+
+          // 直接スタイルを適用
+          dayElement.style.width = `${scaledSize}px`;
+          dayElement.style.height = `${scaledSize}px`;
+          dayElement.style.backgroundColor = "#ebedf0";
+          dayElement.style.border = "1px solid #e1e4e8";
+          dayElement.style.borderRadius = "2px";
+          dayElement.style.display = "block";
+          dayElement.style.flexShrink = "0";
+
+          // 詳細なツールチップを追加
+          const date = new Date(day.date);
+          const month = date.getMonth() + 1;
+          const dayOfMonth = date.getDate();
+          const year = date.getFullYear();
+
+          let tooltipText = `${year}年${month}月${dayOfMonth}日`;
+          if (day.activityCount === 0) {
+            tooltipText += "\n活動なし";
+          } else {
+            tooltipText += "\n活動内容:";
+            if (day.activities.exercise > 0) {
+              tooltipText += `\n・筋トレ: ${day.activities.exercise}回`;
+            }
+            if (day.activities.reading > 0) {
+              tooltipText += `\n・読書: ${day.activities.reading}回`;
+            }
+            if (day.activities.output > 0) {
+              tooltipText += `\n・アウトプット: ${day.activities.output}回`;
+            }
+          }
+
+          dayElement.title = tooltipText;
+
+          weekElement.appendChild(dayElement);
+        });
+
+        grid.appendChild(weekElement);
+      });
+
+      console.log("Contribution graph created successfully!");
+      console.log("Grid children count:", grid.children.length);
+    }
+
+    // DOMが読み込まれてからグラフを作成
+    document.addEventListener("DOMContentLoaded", function () {
+      console.log("DOM loaded, creating charts...");
+
+      // 読書グラフの作成
+      const readingCtx = document.getElementById("readingChart");
+      console.log("Reading canvas:", readingCtx);
+      if (readingCtx) {
+        try {
+          new Chart(readingCtx, {
+            type: "line",
+            data: readingChartData,
+            options: chartOptions,
+          });
+          console.log("Reading chart created successfully");
+        } catch (error) {
+          console.error("Error creating reading chart:", error);
+        }
+      }
+
+      // 筋トレグラフの作成
+      const exerciseCtx = document.getElementById("exerciseChart");
+      console.log("Exercise canvas:", exerciseCtx);
+      if (exerciseCtx) {
+        try {
+          // 筋トレデータを準備
+          const exerciseChartData = {
+            labels: exerciseData
+              .slice(0, 20)
+              .map((item) => item.date)
+              .reverse(),
+            datasets: [
+              {
+                label: "総重量 (kg)",
+                data: exerciseData
+                  .slice(0, 20)
+                  .map((item) => (item.count || 0) * (item.weight || 0))
+                  .reverse(),
+                borderColor: "#39d353",
+                backgroundColor: "rgba(57, 211, 83, 0.1)",
+                tension: 0.4,
+                fill: true,
+              },
+            ],
+          };
+
+          new Chart(exerciseCtx, {
+            type: "line",
+            data: exerciseChartData,
+            options: {
+              ...chartOptions,
+              plugins: {
+                ...chartOptions.plugins,
+                title: {
+                  display: false,
+                },
+              },
+            },
+          });
+          console.log("Exercise chart created successfully");
+        } catch (error) {
+          console.error("Error creating exercise chart:", error);
+        }
+      }
+
+      // コントリビューショングラフの作成
+      console.log("About to create contribution graph...");
+      createContributionGraph();
+      console.log("Contribution graph creation completed");
+    });
+
+    // 即座に実行も試す
+    console.log("Script loaded, trying immediate execution...");
+
+    // 複数のタイミングで実行を試す
+    setTimeout(() => {
+      console.log("Timeout 1 executed, trying to create graph...");
+      createContributionGraph();
+    }, 500);
+
+    setTimeout(() => {
+      console.log("Timeout 2 executed, trying to create graph...");
+      createContributionGraph();
+    }, 1000);
+
+    setTimeout(() => {
+      console.log("Timeout 3 executed, trying to create graph...");
+      createContributionGraph();
+    }, 2000);
+  </script>
 </Layout>
 
 <style>
   .dashboard-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem 1rem;
+    padding: 1rem;
     position: relative;
     overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .dashboard-container::before {
@@ -341,197 +887,315 @@ const sleepStatsArray = Object.values(sleepStats).sort(
 
   .dashboard-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
     position: relative;
     z-index: 1;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .dashboard-title {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     color: white;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     animation: fadeInUp 0.8s ease-out;
   }
 
   .dashboard-subtitle {
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 300;
     margin: 0;
     animation: fadeInUp 0.8s ease-out 0.2s both;
   }
 
-  .dashboard-grid {
+  /* メインコンテンツエリア */
+  .main-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 2rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
     max-width: 1400px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0 auto 1rem auto;
     position: relative;
     z-index: 1;
+    animation: fadeInUp 0.8s ease-out 0.3s both;
+    min-height: 60vh;
   }
 
-  .dashboard-section {
+  /* まとめセクション */
+  .summary-section {
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.8s ease-out 0.3s both;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .summary-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .summary-card {
     background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    padding: 2rem;
+    border-radius: 12px;
+    padding: 1rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    animation: fadeInUp 0.8s ease-out 0.4s both;
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
-  }
-
-  .section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #374151;
-    margin: 0;
-  }
-
-  .add-btn {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  }
-
-  .add-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  }
-
-  .exercise-stats,
-  .book-stats,
-  .output-stats,
-  .sleep-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .exercise-card,
-  .book-card,
-  .output-card,
-  .sleep-card {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1.5rem;
-    background: rgba(102, 126, 234, 0.05);
-    border: 1px solid rgba(102, 126, 234, 0.1);
-    border-radius: 12px;
+    gap: 0.75rem;
     transition: all 0.3s ease;
   }
 
-  .exercise-card:hover,
-  .book-card:hover,
-  .output-card:hover,
-  .sleep-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  .summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   }
 
-  .exercise-icon,
-  .book-icon,
-  .output-icon,
-  .sleep-icon {
+  .summary-icon {
     font-size: 2rem;
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: 12px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border-radius: 20px;
+    color: white;
     flex-shrink: 0;
   }
 
-  .exercise-info,
-  .book-info,
-  .output-info,
-  .sleep-info {
+  .summary-content {
     flex: 1;
   }
 
-  .exercise-name,
-  .book-title,
-  .output-type,
-  .sleep-date {
+  .summary-name {
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #374151;
     margin: 0 0 0.5rem 0;
   }
 
-  .exercise-details,
-  .book-details,
-  .output-details,
-  .sleep-details {
+  .summary-stats {
     display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.3rem;
   }
 
-  .detail-item {
+  .summary-stat {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
   }
 
-  .detail-label {
+  .stat-label {
     font-size: 0.9rem;
     color: #6b7280;
     font-weight: 500;
   }
 
-  .detail-value {
-    font-size: 0.9rem;
+  .stat-value {
+    font-size: 1rem;
     color: #374151;
     font-weight: 600;
   }
 
-  .empty-state {
+  /* ログセクション */
+  .logs-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.8s ease-out 0.4s both;
+    margin-top: 1rem;
+  }
+
+  .logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  .logs-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .add-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+
+  .add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .logs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .log-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .log-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+  }
+
+  .log-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0;
+  }
+
+  .log-count {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .log-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .log-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(102, 126, 234, 0.05);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .log-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateX(4px);
+  }
+
+  .log-icon {
+    font-size: 1.25rem;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .log-info {
+    flex: 1;
+  }
+
+  .log-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .log-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .log-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .log-details {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .log-detail {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .tech-badge {
+    background: rgba(34, 197, 94, 0.1);
+    color: #166534;
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .empty-log {
     text-align: center;
     padding: 2rem;
     color: #6b7280;
   }
 
-  .empty-state p {
-    margin-bottom: 1rem;
+  .empty-log p {
+    margin: 0;
     font-size: 1rem;
-  }
-
-  .empty-state-btn {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(102, 126, 234, 0.2);
-  }
-
-  .empty-state-btn:hover {
-    background: rgba(102, 126, 234, 0.2);
-    transform: translateY(-1px);
   }
 
   @keyframes fadeInUp {
@@ -550,22 +1214,270 @@ const sleepStatsArray = Object.values(sleepStats).sort(
       font-size: 2.5rem;
     }
 
-    .dashboard-grid {
+    .summary-grid,
+    .logs-grid {
       grid-template-columns: 1fr;
       gap: 1.5rem;
     }
 
-    .dashboard-section {
+    .summary-card {
       padding: 1.5rem;
     }
 
-    .exercise-details,
-    .book-details,
-    .output-details,
-    .sleep-details {
-      flex-direction: column;
-      gap: 0.5rem;
+    .summary-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 2rem;
     }
+
+    .logs-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .log-content {
+      max-height: 300px;
+    }
+  }
+
+  /* 右パネル */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* グラフセクション */
+  .charts-section {
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.8s ease-out 0.5s both;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .charts-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .calendar-section {
+    margin-top: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .calendar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .calendar-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chart-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chart-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .chart-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0 0 1rem 0;
+    text-align: center;
+  }
+
+  .chart-card canvas {
+    width: 100% !important;
+    height: 200px !important;
+  }
+
+  /* コントリビューショングラフ */
+  .contribution-graph {
+    width: 100%;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .contribution-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .contribution-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .contribution-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .legend-squares {
+    display: flex;
+    gap: 2px;
+  }
+
+  .legend-square {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .legend-square.exercise {
+    background-color: #39d353;
+  }
+
+  .legend-square.reading {
+    background-color: #39d353;
+  }
+
+  .legend-square.output {
+    background-color: #39d353;
+  }
+
+  .contribution-months {
+    position: relative;
+    height: 20px;
+    margin-bottom: 8px;
+    padding-left: 15px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .contribution-month {
+    font-size: 12px;
+    color: #586069;
+    text-align: center;
+    white-space: nowrap;
+    position: absolute;
+    top: 0;
+  }
+
+  .contribution-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
+    overflow: hidden;
+    min-height: 120px;
+    padding: 10px;
+    background-color: #ffffff;
+    position: relative;
+    align-items: flex-start;
+    width: 100%;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .contribution-week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 16px;
+    margin-right: 3px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .contribution-day {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: #ebedf0;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    display: block;
+    min-width: 16px;
+    min-height: 16px;
+    box-sizing: border-box;
+  }
+
+  .contribution-day:hover {
+    transform: scale(1.2);
+    z-index: 10;
+  }
+
+  /* 色の濃さ */
+  .contribution-day.no-activity {
+    background-color: #ebedf0 !important;
+    border: 1px solid #e1e4e8 !important;
+  }
+
+  .contribution-day.low-activity {
+    background-color: #9be9a8;
+    border: 1px solid #9be9a8;
+  }
+
+  .contribution-day.medium-activity {
+    background-color: #40c463;
+    border: 1px solid #40c463;
+  }
+
+  .contribution-day.high-activity {
+    background-color: #30a14e;
+    border: 1px solid #30a14e;
+  }
+
+  .contribution-day.very-high-activity {
+    background-color: #216e39;
+    border: 1px solid #216e39;
   }
 
   @media (max-width: 480px) {
@@ -577,25 +1489,42 @@ const sleepStatsArray = Object.values(sleepStats).sort(
       font-size: 2rem;
     }
 
-    .dashboard-section {
-      padding: 1rem;
-    }
-
-    .exercise-card,
-    .book-card,
-    .output-card,
-    .sleep-card {
+    .summary-card {
       flex-direction: column;
       text-align: center;
+      padding: 1.5rem;
     }
 
-    .exercise-icon,
-    .book-icon,
-    .output-icon,
-    .sleep-icon {
-      width: 50px;
-      height: 50px;
-      font-size: 1.5rem;
+    .summary-stats {
+      width: 100%;
+    }
+
+    .log-item {
+      flex-direction: column;
+      text-align: center;
+      gap: 0.5rem;
+    }
+
+    .log-main {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .log-details {
+      justify-content: center;
+    }
+
+    .charts-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .chart-card {
+      padding: 1.5rem;
+    }
+
+    .chart-card canvas {
+      height: 250px !important;
     }
   }
 </style>
