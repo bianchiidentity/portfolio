@@ -16,6 +16,10 @@ export const EXERCISE_LIST = [
   { id: 15, name: "ダンベルカール", displayOrder: 15, icon: "💪" },
   { id: 16, name: "デッドリフト", displayOrder: 16, icon: "🏋️" },
   { id: 17, name: "ネックエクステンション", displayOrder: 17, icon: "🦒" },
+  { id: 18, name: "トルソーローテーション", displayOrder: 18, icon: "🔄" },
+  { id: 19, name: "アブドミナルクランチ", displayOrder: 19, icon: "🤸" },
+  { id: 20, name: "パワーミル", displayOrder: 20, icon: "⚡" },
+  { id: 21, name: "トレッドミル", displayOrder: 21, icon: "🏃" },
 ].sort((a, b) => a.displayOrder - b.displayOrder);
 
 // 種目名からアイコンを取得する関数
