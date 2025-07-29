@@ -2,9 +2,9 @@
 import Layout from "../layouts/Layout.astro";
 import { EXERCISE_LIST } from "../consts/exercises";
 
-// Basic認証の実装（local環境では無効）
+// Basic認証
 const authHeader = Astro.request.headers.get("authorization");
-const locals = Astro.locals;
+const locals = Astro.locals as CustomLocals;
 const expectedUsername = locals?.runtime?.env?.ADMIN_USERNAME;
 const expectedPassword = locals?.runtime?.env?.ADMIN_PASSWORD;
 

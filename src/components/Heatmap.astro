@@ -1,0 +1,493 @@
+---
+// ヒートマップコンポーネント
+export type Props = {
+  exerciseData: any[];
+  bookData: any[];
+  outputData: any[];
+};
+
+const { exerciseData, bookData, outputData } = Astro.props;
+---
+
+<div class="contribution-graph">
+  <div class="contribution-header">
+    <span class="contribution-title">過去1年間の活動</span>
+    <div class="contribution-legend">
+      <span>少ない</span>
+      <div class="legend-squares">
+        <div class="legend-square exercise"></div>
+        <div class="legend-square reading"></div>
+        <div class="legend-square output"></div>
+      </div>
+      <span>多い</span>
+    </div>
+  </div>
+  <div class="contribution-container">
+    <div class="contribution-months" id="contributionMonths"></div>
+    <div class="contribution-grid" id="contributionGrid"></div>
+  </div>
+</div>
+
+<script define:vars={{ exerciseData, bookData, outputData }}>
+  // コントリビューショングラフの作成
+  function createContributionGraph() {
+    const grid = document.getElementById("contributionGrid");
+    const monthsContainer = document.getElementById("contributionMonths");
+    if (!grid) {
+      return;
+    }
+
+    // 既存のコンテンツをクリア
+    grid.innerHTML = "";
+    if (monthsContainer) {
+      monthsContainer.innerHTML = "";
+    }
+
+    // 過去12ヶ月間の日付を生成（現在から過去へ）
+    const today = new Date();
+    const twelveMonthsAgo = new Date(
+      today.getFullYear(),
+      today.getMonth() - 12,
+      today.getDate()
+    );
+
+    // 現在の日付を基準に、12ヶ月前の同じ日付から開始
+    const startDate = new Date(twelveMonthsAgo);
+    const endDate = new Date(today);
+
+    // 日付を昇順でソート（過去から現在へ）
+    const allDates = [];
+    for (
+      let d = new Date(startDate);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
+      allDates.push(new Date(d).toISOString().split("T")[0]);
+    }
+
+    // データを日付でグループ化（詳細な活動データ）
+    const activityData = {};
+
+    // 筋トレデータ
+    exerciseData?.forEach((item) => {
+      const date = item.date;
+      if (!activityData[date]) {
+        activityData[date] = { exercise: 0, reading: 0, output: 0 };
+      }
+      activityData[date].exercise += 1;
+    });
+
+    // 読書データ
+    bookData?.forEach((item) => {
+      const date = item.date;
+      if (!activityData[date]) {
+        activityData[date] = { exercise: 0, reading: 0, output: 0 };
+      }
+      activityData[date].reading += 1;
+    });
+
+    // アウトプットデータ
+    outputData?.forEach((item) => {
+      const date = item.date;
+      if (!activityData[date]) {
+        activityData[date] = { exercise: 0, reading: 0, output: 0 };
+      }
+      activityData[date].output += 1;
+    });
+
+    // 週ごとにデータを整理
+    const weeks = [];
+    let currentWeek = [];
+    let currentWeekStart = null;
+
+    allDates.forEach((dateStr) => {
+      const date = new Date(dateStr);
+      const dayOfWeek = date.getDay(); // 0 = 日曜日, 1 = 月曜日, ...
+
+      // 週の開始を決定（月曜日開始）
+      if (currentWeekStart === null) {
+        currentWeekStart = new Date(date);
+        // 月曜日になるまで遡る
+        while (currentWeekStart.getDay() !== 1) {
+          currentWeekStart.setDate(currentWeekStart.getDate() - 1);
+        }
+      }
+
+      // 新しい週の開始かチェック
+      const weekStart = new Date(currentWeekStart);
+      weekStart.setDate(weekStart.getDate() + 7);
+      if (date >= weekStart) {
+        if (currentWeek.length > 0) {
+          weeks.push(currentWeek);
+        }
+        currentWeek = [];
+        currentWeekStart = new Date(date);
+        // 月曜日になるまで遡る
+        while (currentWeekStart.getDay() !== 1) {
+          currentWeekStart.setDate(currentWeekStart.getDate() - 1);
+        }
+      }
+
+      // 活動データを取得
+      const activities = activityData[dateStr] || {
+        exercise: 0,
+        reading: 0,
+        output: 0,
+      };
+      const activityCount =
+        activities.exercise + activities.reading + activities.output;
+
+      currentWeek.push({
+        date: dateStr,
+        activityCount,
+        activities,
+      });
+    });
+
+    // 最後の週を追加
+    if (currentWeek.length > 0) {
+      weeks.push(currentWeek);
+    }
+
+    // 各週を7日分に統一（不足分は空の日で埋める）
+    weeks.forEach((week) => {
+      while (week.length < 7) {
+        const lastDate = week[week.length - 1];
+        const nextDate = new Date(lastDate.date);
+        nextDate.setDate(nextDate.getDate() + 1);
+        week.push({
+          date: nextDate.toISOString().split("T")[0],
+          activityCount: 0,
+          activities: { exercise: 0, reading: 0, output: 0 },
+        });
+      }
+    });
+
+    // 月ラベルを生成（グリッドの横幅と1日を含むグリッドの位置で計算）
+    if (monthsContainer) {
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      // グリッドの横幅を取得
+      const gridWidth = grid?.offsetWidth || 800;
+      const weekWidth = 19; // 1週の幅
+      const marginRight = 3; // margin-rightのみ
+      const actualWeekWidth = weekWidth + marginRight; // 実際の1週の幅（marginのみ含む）
+
+      // 各週をチェックして1日を含む週を特定
+      const monthsWithFirstDay = [];
+      weeks.forEach((week, weekIndex) => {
+        const hasFirstDay = week.some((day) => {
+          const date = new Date(day.date);
+          return date.getDate() === 1;
+        });
+
+        if (hasFirstDay) {
+          const firstDayInWeek = week.find((day) => {
+            const date = new Date(day.date);
+            return date.getDate() === 1;
+          });
+          if (firstDayInWeek) {
+            const date = new Date(firstDayInWeek.date);
+            const monthIndex = date.getMonth();
+            const monthName = monthNames[monthIndex];
+
+            // 1日を含む週の位置を計算（gapとmargin含む）
+            const weekPosition = (weekIndex + 1) * actualWeekWidth - 11; // 11px左に調整
+
+            monthsWithFirstDay.push({
+              monthName,
+              monthIndex,
+              weekIndex,
+              weekPosition,
+            });
+          }
+        }
+      });
+
+      // 月ラベルを配置
+      monthsWithFirstDay.forEach((monthInfo, index) => {
+        const monthLabel = document.createElement("div");
+        monthLabel.className = "contribution-month";
+        monthLabel.textContent = monthInfo.monthName;
+
+        // 次の月までの幅を計算（gapとmargin含む）
+        const nextMonth = monthsWithFirstDay[index + 1];
+        const monthWidth = 0; // すべての月ラベルの幅を22pxに固定
+
+        monthLabel.style.position = "absolute";
+        monthLabel.style.left = `${monthInfo.weekPosition}px`;
+        monthLabel.style.width = `${monthWidth}px`;
+        monthLabel.style.textAlign = "center";
+
+        monthsContainer.appendChild(monthLabel);
+      });
+    }
+
+    // HTMLを生成
+    weeks.forEach((week) => {
+      const weekElement = document.createElement("div");
+      weekElement.className = "contribution-week";
+
+      // グリッドの幅に合わせてスケール調整
+      const containerWidth = grid.offsetWidth || 800; // フォールバック値
+      const totalWeekWidth = weeks.length * 19; // 19px per week
+      const scale = Math.min(1, containerWidth / totalWeekWidth);
+      const scaledGap = Math.max(1, 2 * scale); // 最小1px
+
+      weekElement.style.gap = `${scaledGap}px`;
+      weekElement.style.marginRight = `${scaledGap}px`;
+
+      week.forEach((day) => {
+        const dayElement = document.createElement("div");
+        dayElement.className = "contribution-day";
+
+        // 活動量に基づいて色を決定
+        let backgroundColor = "#ebedf0";
+        let borderColor = "#e1e4e8";
+
+        if (day.activityCount === 0) {
+          backgroundColor = "#ebedf0";
+          borderColor = "#e1e4e8";
+        } else if (day.activityCount === 1) {
+          backgroundColor = "#9be9a8";
+          borderColor = "#9be9a8";
+        } else if (day.activityCount === 2) {
+          backgroundColor = "#40c463";
+          borderColor = "#40c463";
+        } else if (day.activityCount === 3) {
+          backgroundColor = "#30a14e";
+          borderColor = "#30a14e";
+        } else {
+          backgroundColor = "#216e39";
+          borderColor = "#216e39";
+        }
+
+        // グリッドの幅に合わせてスケール調整
+        const containerWidth = grid.offsetWidth || 800; // フォールバック値
+        const totalWeekWidth = weeks.length * 19; // 19px per week
+        const scale = Math.min(1, containerWidth / totalWeekWidth);
+        const scaledSize = Math.max(8, 16 * scale); // 最小8px
+
+        // 直接スタイルを適用
+        dayElement.style.width = `${scaledSize}px`;
+        dayElement.style.height = `${scaledSize}px`;
+        dayElement.style.backgroundColor = backgroundColor;
+        dayElement.style.border = `1px solid ${borderColor}`;
+        dayElement.style.borderRadius = "2px";
+        dayElement.style.display = "block";
+        dayElement.style.flexShrink = "0";
+
+        // 詳細なツールチップを追加
+        const date = new Date(day.date);
+        const month = date.getMonth() + 1;
+        const dayOfMonth = date.getDate();
+        const year = date.getFullYear();
+
+        let tooltipText = `${year}年${month}月${dayOfMonth}日`;
+        if (day.activityCount === 0) {
+          tooltipText += "\n活動なし";
+        } else {
+          tooltipText += "\n活動内容:";
+          if (day.activities.exercise > 0) {
+            tooltipText += `\n・筋トレ: ${day.activities.exercise}回`;
+          }
+          if (day.activities.reading > 0) {
+            tooltipText += `\n・読書: ${day.activities.reading}回`;
+          }
+          if (day.activities.output > 0) {
+            tooltipText += `\n・アウトプット: ${day.activities.output}回`;
+          }
+        }
+
+        dayElement.title = tooltipText;
+
+        weekElement.appendChild(dayElement);
+      });
+
+      grid.appendChild(weekElement);
+    });
+  }
+
+  // DOMが読み込まれてからグラフを作成
+  document.addEventListener("DOMContentLoaded", function () {
+    createContributionGraph();
+  });
+</script>
+
+<style>
+  /* コントリビューショングラフ */
+  .contribution-graph {
+    width: 100%;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .contribution-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .contribution-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .contribution-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .legend-squares {
+    display: flex;
+    gap: 2px;
+  }
+
+  .legend-square {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .legend-square.exercise {
+    background-color: #39d353;
+  }
+
+  .legend-square.reading {
+    background-color: #39d353;
+  }
+
+  .legend-square.output {
+    background-color: #39d353;
+  }
+
+  .contribution-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-height: 140px;
+    padding: 15px 25px 15px 15px;
+    background-color: #ffffff;
+    overflow: hidden;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0 auto; /* 横方向中央揃え */
+  }
+
+  .contribution-months {
+    position: relative;
+    height: 25px;
+    margin-bottom: 10px;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .contribution-month {
+    font-size: 12px;
+    color: #586069;
+    text-align: center;
+    white-space: nowrap;
+    position: absolute;
+    top: 0;
+    width: 76px; /* 4グリッド分の幅 (19px × 4) */
+  }
+
+  .contribution-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
+    overflow: hidden;
+    min-height: 140px;
+    padding: 0;
+    background-color: transparent;
+    position: relative;
+    align-items: flex-start;
+    width: 100%;
+    flex-wrap: nowrap;
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .contribution-week {
+    display: flex;
+    flex-direction: column;
+    gap: 1px; /* 縦方向のgapを1pxに設定 */
+    min-height: 16px;
+    margin-right: 3px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .contribution-day {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: #ebedf0;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    display: block;
+    min-width: 16px;
+    min-height: 16px;
+    box-sizing: border-box;
+  }
+
+  .contribution-day:hover {
+    transform: scale(1.2);
+    z-index: 10;
+  }
+
+  /* 色の濃さ */
+  .contribution-day.no-activity {
+    background-color: #ebedf0 !important;
+    border: 1px solid #e1e4e8 !important;
+  }
+
+  .contribution-day.low-activity {
+    background-color: #9be9a8;
+    border: 1px solid #9be9a8;
+  }
+
+  .contribution-day.medium-activity {
+    background-color: #40c463;
+    border: 1px solid #40c463;
+  }
+
+  .contribution-day.high-activity {
+    background-color: #30a14e;
+    border: 1px solid #30a14e;
+  }
+
+  .contribution-day.very-high-activity {
+    background-color: #216e39;
+    border: 1px solid #216e39;
+  }
+</style>

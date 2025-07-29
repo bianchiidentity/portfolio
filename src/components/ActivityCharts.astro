@@ -1,0 +1,232 @@
+---
+// 活動グラフコンポーネント
+export type Props = {
+  exerciseData: any[];
+  bookData: any[];
+};
+
+const { exerciseData, bookData } = Astro.props;
+---
+
+<section class="right-panel">
+  <!-- グラフセクション -->
+  <div class="charts-section">
+    <h2 class="charts-title">📈 活動グラフ</h2>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3 class="chart-name">読書ページ数の推移</h3>
+        <canvas id="readingChart" width="400" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3 class="chart-name">筋トレ重量の推移</h3>
+        <canvas id="exerciseChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script define:vars={{ exerciseData, bookData }}>
+  console.log("Chart.js loaded:", typeof Chart);
+  console.log("Exercise data:", exerciseData);
+  console.log("Book data:", bookData);
+
+  // データが空の場合はサンプルデータを使用
+  const hasBookData = bookData && bookData.length > 0;
+
+  // 読書データの準備
+  const readingChartData = {
+    labels: hasBookData
+      ? bookData.map((item) => item.date).reverse()
+      : ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05"],
+    datasets: [
+      {
+        label: "読書ページ数",
+        data: hasBookData
+          ? bookData.map((item) => item.pages_read || 0).reverse()
+          : [20, 35, 15, 40, 25],
+        borderColor: "rgb(255, 99, 132)",
+        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        tension: 0.1,
+      },
+    ],
+  };
+
+  console.log("Reading chart data:", readingChartData);
+
+  // グラフの設定
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+    plugins: {
+      legend: {
+        display: true,
+      },
+    },
+  };
+
+  // DOMが読み込まれてからグラフを作成
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM loaded, creating charts...");
+
+    // 読書グラフの作成
+    const readingCtx = document.getElementById("readingChart");
+    console.log("Reading canvas:", readingCtx);
+    if (readingCtx) {
+      try {
+        new Chart(readingCtx, {
+          type: "line",
+          data: readingChartData,
+          options: chartOptions,
+        });
+        console.log("Reading chart created successfully");
+      } catch (error) {
+        console.error("Error creating reading chart:", error);
+      }
+    }
+
+    // 筋トレグラフの作成
+    const exerciseCtx = document.getElementById("exerciseChart");
+    console.log("Exercise canvas:", exerciseCtx);
+    if (exerciseCtx) {
+      try {
+        // 筋トレデータを準備
+        const exerciseChartData = {
+          labels: exerciseData
+            .slice(0, 20)
+            .map((item) => item.date)
+            .reverse(),
+          datasets: [
+            {
+              label: "総重量 (kg)",
+              data: exerciseData
+                .slice(0, 20)
+                .map((item) => (item.count || 0) * (item.weight || 0))
+                .reverse(),
+              borderColor: "#39d353",
+              backgroundColor: "rgba(57, 211, 83, 0.1)",
+              tension: 0.4,
+              fill: true,
+            },
+          ],
+        };
+
+        new Chart(exerciseCtx, {
+          type: "line",
+          data: exerciseChartData,
+          options: {
+            ...chartOptions,
+            plugins: {
+              ...chartOptions.plugins,
+              title: {
+                display: false,
+              },
+            },
+          },
+        });
+        console.log("Exercise chart created successfully");
+      } catch (error) {
+        console.error("Error creating exercise chart:", error);
+      }
+    }
+  });
+</script>
+
+<style>
+  /* 右パネル */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* グラフセクション */
+  .charts-section {
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.8s ease-out 0.5s both;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .charts-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chart-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chart-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .chart-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0 0 1rem 0;
+    text-align: center;
+  }
+
+  .chart-card canvas {
+    width: 100% !important;
+    height: 200px !important;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .charts-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .chart-card {
+      padding: 1.5rem;
+    }
+
+    .chart-card canvas {
+      height: 250px !important;
+    }
+  }
+</style>
