@@ -1,0 +1,168 @@
+---
+// 筋トレグラフコンポーネント
+import { Chart } from "chart.js/auto";
+
+export type Props = {
+  exerciseData: any[];
+};
+
+const { exerciseData } = Astro.props;
+---
+
+<div class="chart-card">
+  <h3 class="chart-name">筋トレ負荷スコアの推移</h3>
+  <canvas id="exerciseChart" width="400" height="200"></canvas>
+</div>
+
+<script define:vars={{ exerciseData }}>
+  // Chart.jsが読み込まれているか確認
+  function initializeExerciseChart() {
+    if (typeof Chart === "undefined") {
+      console.log("Chart.js not loaded, retrying...");
+      setTimeout(initializeExerciseChart, 1000);
+      return;
+    }
+
+    const hasExerciseData = exerciseData && exerciseData.length > 0;
+
+    // グラフの設定
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+      plugins: {
+        legend: {
+          display: true,
+        },
+      },
+    };
+
+    // 筋トレグラフの作成
+    const exerciseCtx = document.getElementById("exerciseChart");
+    if (exerciseCtx) {
+      if (hasExerciseData) {
+        try {
+          // 日付ごとに重量を集計（TSS計算は一時的に無効）
+          const dailyWeight = {};
+
+          exerciseData.forEach((item, index) => {
+            const date = item.date;
+            const weight = item.weight || 0;
+            const count = item.count || 0;
+
+            // 一時的に重量のみを使用
+            const totalWeight = weight * count;
+
+            if (!dailyWeight[date]) {
+              dailyWeight[date] = 0;
+            }
+            dailyWeight[date] += totalWeight;
+          });
+
+          // 日付順にソート
+          const sortedDates = Object.keys(dailyWeight).sort();
+          const weightValues = sortedDates.map((date) => dailyWeight[date]);
+
+          const exerciseChartData = {
+            labels: sortedDates.slice(-20), // 最新20日分
+            datasets: [
+              {
+                label: "総重量 (kg)",
+                data: weightValues.slice(-20),
+                borderColor: "#39d353",
+                backgroundColor: "rgba(57, 211, 83, 0.1)",
+                tension: 0.4,
+                fill: true,
+              },
+            ],
+          };
+
+          new Chart(exerciseCtx, {
+            type: "line",
+            data: exerciseChartData,
+            options: {
+              ...chartOptions,
+              plugins: {
+                ...chartOptions.plugins,
+                title: {
+                  display: false,
+                },
+              },
+            },
+          });
+        } catch (error) {
+          console.error("Error creating exercise chart:", error);
+        }
+      } else {
+        exerciseCtx.style.display = "none";
+        const exerciseCard = exerciseCtx.closest(".chart-card");
+        if (exerciseCard) {
+          const messageDiv = document.createElement("div");
+          messageDiv.style.cssText =
+            "text-align: center; padding: 2rem; color: #6b7280; font-size: 1.1rem;";
+          messageDiv.textContent = "データがありません";
+          exerciseCard.appendChild(messageDiv);
+        }
+      }
+    }
+  }
+
+  // DOMが読み込まれてからグラフを作成
+  document.addEventListener("DOMContentLoaded", function () {
+    initializeExerciseChart();
+  });
+
+  // フォールバック: DOMContentLoadedが既に発火している場合
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeExerciseChart);
+  } else {
+    initializeExerciseChart();
+  }
+</script>
+
+<style>
+  .chart-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chart-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .chart-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0 0 1rem 0;
+    text-align: center;
+  }
+
+  .chart-card canvas {
+    width: 100% !important;
+    height: 200px !important;
+  }
+
+  @media (max-width: 768px) {
+    .chart-card {
+      padding: 1.5rem;
+    }
+
+    .chart-card canvas {
+      height: 250px !important;
+    }
+  }
+</style>

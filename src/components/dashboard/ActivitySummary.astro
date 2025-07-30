@@ -17,6 +17,20 @@ const {
   bookStats,
   outputStats,
 } = Astro.props;
+
+// ジムに行った回数（ユニークな日付数）を計算
+const uniqueGymDates = new Set(exerciseData.map((item) => (item as any).date));
+const gymVisitCount = uniqueGymDates.size;
+
+// 各エクササイズの総回数を計算
+const exerciseTotalCounts: { [key: string]: number } = {};
+exerciseData.forEach((item) => {
+  const exerciseName = (item as any).exercise_name;
+  if (!exerciseTotalCounts[exerciseName]) {
+    exerciseTotalCounts[exerciseName] = 0;
+  }
+  exerciseTotalCounts[exerciseName] += (item as any).count || 0;
+});
 ---
 
 <section class="summary-section">
@@ -28,21 +42,17 @@ const {
         <h3 class="summary-name">筋トレ</h3>
         <div class="summary-stats">
           <div class="summary-stat">
-            <span class="stat-label">総回数</span>
-            <span class="stat-value"
-              >{
-                exerciseData.reduce(
-                  (sum, item) => sum + ((item as any).count || 0),
-                  0
-                )
-              }回</span
-            >
+            <span class="stat-label">ジムに行った回数</span>
+            <span class="stat-value">{gymVisitCount}回</span>
           </div>
           {
             Object.entries(exerciseMaxRecords).map(([exerciseName, record]) => (
               <div class="summary-stat">
-                <span class="stat-label">{exerciseName}最大重量</span>
-                <span class="stat-value">{(record as any).maxWeight}kg</span>
+                <span class="stat-label">{exerciseName}</span>
+                <span class="stat-value">
+                  最大{(record as any).maxWeight}kg / 総
+                  {exerciseTotalCounts[exerciseName] || 0}回
+                </span>
               </div>
             ))
           }

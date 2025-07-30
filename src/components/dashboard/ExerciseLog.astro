@@ -1,5 +1,7 @@
 ---
 // 筋トレログコンポーネント
+import { getExerciseIcon } from "../../consts/exercises";
+
 export type Props = {
   exerciseData: any[];
 };
@@ -17,7 +19,7 @@ const { exerciseData } = Astro.props;
       exerciseData.length > 0 ? (
         exerciseData.slice(0, 10).map((item) => (
           <div class="log-item">
-            <div class="log-icon">🏋️</div>
+            <div class="log-icon">{getExerciseIcon(item.exercise_name)}</div>
             <div class="log-info">
               <div class="log-main">
                 <span class="log-name">{item.exercise_name}</span>

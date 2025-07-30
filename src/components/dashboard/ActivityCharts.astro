@@ -1,0 +1,74 @@
+---
+// 活動グラフコンポーネント
+import ReadingChart from "./chart/ReadingChart.astro";
+import ExerciseChart from "./chart/ExerciseChart.astro";
+
+const { exerciseData = [], bookData = [] } = Astro.props;
+---
+
+<section class="right-panel">
+  <!-- グラフセクション -->
+  <div class="charts-section">
+    <h2 class="charts-title">📈 活動グラフ</h2>
+    <div class="charts-grid">
+      <ReadingChart bookData={bookData} />
+      <ExerciseChart exerciseData={exerciseData} />
+    </div>
+  </div>
+</section>
+
+<style>
+  /* 右パネル */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* グラフセクション */
+  .charts-section {
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.8s ease-out 0.5s both;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .charts-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .charts-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+  }
+</style>

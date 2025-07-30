@@ -1,12 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { EXERCISE_LIST, getExerciseIcon } from "../consts/exercises";
-import Heatmap from "../components/Heatmap.astro";
-import ExerciseLog from "../components/ExerciseLog.astro";
-import ActivitySummary from "../components/ActivitySummary.astro";
-import ActivityCharts from "../components/ActivityCharts.astro";
-import BookLog from "../components/BookLog.astro";
-import OutputLog from "../components/OutputLog.astro";
+import ActivitySummary from "../components/dashboard/ActivitySummary.astro";
+import ActivityCharts from "../components/dashboard/ActivityCharts.astro";
+import Heatmap from "../components/dashboard/Heatmap.astro";
+import ExerciseLog from "../components/dashboard/ExerciseLog.astro";
+import BookLog from "../components/dashboard/BookLog.astro";
+import OutputLog from "../components/dashboard/OutputLog.astro";
 
 // 直接データベースからデータを取得
 const locals = Astro.locals;
@@ -149,46 +149,12 @@ outputData.forEach((item) => {
 const outputStatsArray = Object.values(outputStats).sort(
   (a, b) => ((b as any).sessions || 0) - ((a as any).sessions || 0)
 );
-
-// 継続日数の計算（最新の日付から連続で記録がある日数を計算）
-function calculateStreak(data, dateField) {
-  if (data.length === 0) return 0;
-
-  const sortedData = data.sort(
-    (a, b) =>
-      new Date((b as any)[dateField] || 0) -
-      new Date((a as any)[dateField] || 0)
-  );
-  const latestDate = new Date((sortedData[0] as any)[dateField] || 0);
-  let currentDate = new Date(latestDate);
-  let streak = 0;
-
-  for (let i = 0; i < 365; i++) {
-    // 最大1年分チェック
-    const dateStr = currentDate.toISOString().split("T")[0];
-    const hasRecord = data.some((item) => (item as any)[dateField] === dateStr);
-
-    if (hasRecord) {
-      streak++;
-      currentDate.setDate((currentDate.getDate() || 0) - 1);
-    } else {
-      break;
-    }
-  }
-
-  return streak;
-}
-
-const exerciseStreak = calculateStreak(exerciseData, "date") || 0;
-const bookStreak = calculateStreak(bookData, "date") || 0;
-const outputStreak = calculateStreak(outputData, "date") || 0;
 ---
 
 <Layout>
   <main class="dashboard-container">
     <div class="dashboard-header">
-      <h1 class="dashboard-title">📊 ライフログダッシュボード</h1>
-      <p class="dashboard-subtitle">あなたの日々の活動を可視化</p>
+      <h1 class="dashboard-title">ライフログダッシュボード</h1>
     </div>
 
     <div class="main-content">
@@ -201,11 +167,9 @@ const outputStreak = calculateStreak(outputData, "date") || 0;
         outputStats={outputStats}
       />
 
-      <!-- 右上: グラフ -->
       <ActivityCharts exerciseData={exerciseData} bookData={bookData} />
     </div>
 
-    <!-- 中央: カレンダー -->
     <section class="calendar-section-main">
       <h2 class="calendar-title">📅 活動カレンダー</h2>
       <div class="calendar-card">
@@ -216,22 +180,15 @@ const outputStreak = calculateStreak(outputData, "date") || 0;
         />
       </div>
     </section>
+    <section class="logs-section">
+      <h2 class="logs-title">📋 詳細ログ</h2>
+      <div class="logs-grid">
+        <ExerciseLog exerciseData={exerciseData} />
+        <BookLog bookData={bookData} />
+        <OutputLog outputData={outputData} />
+      </div>
+    </section>
   </main>
-
-  <!-- 詳細ログセクション -->
-  <section class="logs-section">
-    <h2 class="logs-title">📋 詳細ログ</h2>
-    <div class="logs-grid">
-      <!-- 筋トレログ -->
-      <ExerciseLog exerciseData={exerciseData} />
-
-      <!-- 読書ログ -->
-      <BookLog bookData={bookData} />
-
-      <!-- アウトプットログ -->
-      <OutputLog outputData={outputData} />
-    </div>
-  </section>
 </Layout>
 
 <style>

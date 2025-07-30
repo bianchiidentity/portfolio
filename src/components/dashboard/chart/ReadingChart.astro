@@ -1,0 +1,135 @@
+---
+// 読書グラフコンポーネント
+import { Chart } from "chart.js/auto";
+
+const { bookData = [] } = Astro.props;
+---
+
+<div class="chart-card">
+  <h3 class="chart-name">読書ページ数の推移</h3>
+  <canvas id="readingChart" width="400" height="200"></canvas>
+</div>
+
+<script define:vars={{ bookData }}>
+  // Chart.jsが読み込まれているか確認
+  function initializeReadingChart() {
+    if (typeof Chart === "undefined") {
+      setTimeout(initializeReadingChart, 1000);
+      return;
+    }
+
+    // データが空の場合は「データがありません」と表示
+    const hasBookData = bookData && bookData.length > 0;
+
+    // グラフの設定
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+      plugins: {
+        legend: {
+          display: true,
+        },
+      },
+    };
+
+    // 読書グラフの作成
+    const readingCtx = document.getElementById("readingChart");
+    if (readingCtx) {
+      if (hasBookData) {
+        try {
+          const readingChartData = {
+            labels: bookData.map((item) => item.date).reverse(),
+            datasets: [
+              {
+                label: "読書ページ数",
+                data: bookData.map((item) => item.pages_read || 0).reverse(),
+                borderColor: "rgb(255, 99, 132)",
+                backgroundColor: "rgba(255, 99, 132, 0.2)",
+                tension: 0.1,
+              },
+            ],
+          };
+
+          new Chart(readingCtx, {
+            type: "line",
+            data: readingChartData,
+            options: chartOptions,
+          });
+        } catch (error) {
+          console.error("Error creating reading chart:", error);
+        }
+      } else {
+        // データがない場合はメッセージを表示
+        readingCtx.style.display = "none";
+        const readingCard = readingCtx.closest(".chart-card");
+        if (readingCard) {
+          const messageDiv = document.createElement("div");
+          messageDiv.style.cssText =
+            "text-align: center; padding: 2rem; color: #6b7280; font-size: 1.1rem;";
+          messageDiv.textContent = "データがありません";
+          readingCard.appendChild(messageDiv);
+        }
+      }
+    }
+  }
+
+  // DOMが読み込まれてからグラフを作成
+  document.addEventListener("DOMContentLoaded", function () {
+    initializeReadingChart();
+  });
+
+  // フォールバック: DOMContentLoadedが既に発火している場合
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeReadingChart);
+  } else {
+    initializeReadingChart();
+  }
+</script>
+
+<style>
+  .chart-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chart-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .chart-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0 0 1rem 0;
+    text-align: center;
+  }
+
+  .chart-card canvas {
+    width: 100% !important;
+    height: 200px !important;
+  }
+
+  @media (max-width: 768px) {
+    .chart-card {
+      padding: 1.5rem;
+    }
+
+    .chart-card canvas {
+      height: 250px !important;
+    }
+  }
+</style>
