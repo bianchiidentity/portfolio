@@ -1,11 +1,37 @@
 import type { APIRoute } from "astro";
+import type { ApiResponse } from "../../types/database";
+
+type DashboardData = {
+  date: string;
+  exercise_count: number;
+  book_pages: number;
+  output_chars: number;
+  sleep_hours: number;
+}
+
+type DashboardResponse = ApiResponse<DashboardData[]>
+
+type RuntimeEnv = {
+  DB: any; // D1Database type
+}
+
+type Locals = {
+  runtime?: {
+    env: RuntimeEnv;
+  };
+}
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
-    const { DB } = (locals as any).runtime?.env || {};
+    const { DB } = (locals as Locals).runtime?.env || {};
 
     if (!DB) {
-      return new Response(JSON.stringify({ error: "データベース接続エラー" }), {
+      const errorResponse: DashboardResponse = {
+        success: false,
+        error: "データベース接続エラー",
+      };
+
+      return new Response(JSON.stringify(errorResponse), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
@@ -19,27 +45,26 @@ export const GET: APIRoute = async ({ locals }) => {
     `
     ).all();
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: result.results || [],
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    const successResponse: DashboardResponse = {
+      success: true,
+      data: result.results || [],
+    };
+
+    return new Response(JSON.stringify(successResponse), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("API Error:", error);
-    return new Response(
-      JSON.stringify({
-        error: "サーバーエラーが発生しました",
-        details: (error as Error).message,
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+
+    const errorResponse: DashboardResponse = {
+      success: false,
+      error: "サーバーエラーが発生しました",
+    };
+
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };

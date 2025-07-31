@@ -1,7 +1,5 @@
 ---
 // 読書グラフコンポーネント
-import { Chart } from "chart.js/auto";
-
 const { bookData = [] } = Astro.props;
 ---
 
@@ -10,7 +8,7 @@ const { bookData = [] } = Astro.props;
   <canvas id="readingChart" width="400" height="200"></canvas>
 </div>
 
-<script define:vars={{ bookData }}>
+<script is:inline define:vars={{ bookData }}>
   // Chart.jsが読み込まれているか確認
   function initializeReadingChart() {
     if (typeof Chart === "undefined") {

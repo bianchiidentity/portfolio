@@ -88,13 +88,13 @@ const toc = headings
       const href = link.getAttribute("href");
 
       // 外部リンク（/blogなど）の場合は通常のナビゲーションを許可
-      if (href.startsWith("/") && !href.startsWith("/#")) {
+      if (href && href.startsWith("/") && !href.startsWith("/#")) {
         return; // デフォルトの動作を許可
       }
 
       // 内部リンク（#で始まる）の場合のみスムーズスクロール
       e.preventDefault();
-      const targetId = href.substring(1);
+      const targetId = href ? href.substring(1) : "";
       const targetElement = document.getElementById(targetId);
       if (targetElement) {
         // ヘッダーの高さを考慮してスクロール位置を調整
@@ -134,7 +134,7 @@ const toc = headings
         .querySelectorAll(".toc-nav a")
         .forEach((a) => a.classList.remove("active"));
       const activeLink = document.querySelector(
-        `.toc-nav a[href="#${currentHeading.id}"]`
+        `.toc-nav a[href="#${(currentHeading as HTMLElement).id}"]`
       );
       if (activeLink) {
         activeLink.classList.add("active");

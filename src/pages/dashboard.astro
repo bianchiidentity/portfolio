@@ -1,6 +1,5 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { EXERCISE_LIST, getExerciseIcon } from "../consts/exercises";
 import ActivitySummary from "../components/dashboard/ActivitySummary.astro";
 import ActivityCharts from "../components/dashboard/ActivityCharts.astro";
 import Heatmap from "../components/dashboard/Heatmap.astro";
@@ -8,9 +7,59 @@ import ExerciseLog from "../components/dashboard/ExerciseLog.astro";
 import BookLog from "../components/dashboard/BookLog.astro";
 import OutputLog from "../components/dashboard/OutputLog.astro";
 
+// 型定義
+interface ExerciseItem {
+  exercise_name: string;
+  count: number;
+  weight: number;
+  date: string;
+}
+
+interface BookItem {
+  title: string;
+  pages_read: number;
+  date: string;
+}
+
+interface OutputItem {
+  type: string;
+  chars: number;
+  is_tech: boolean;
+  date: string;
+}
+
+interface ExerciseStats {
+  [key: string]: {
+    name: string;
+    totalCount: number;
+    totalWeight: number;
+    sessions: number;
+    lastDate: string | null;
+  };
+}
+
+interface BookStats {
+  [key: string]: {
+    title: string;
+    totalPages: number;
+    sessions: number;
+    lastDate: string | null;
+  };
+}
+
+interface OutputStats {
+  [key: string]: {
+    type: string;
+    totalChars: number;
+    sessions: number;
+    techCount: number;
+    lastDate: string | null;
+  };
+}
+
 // 直接データベースからデータを取得
 const locals = Astro.locals;
-const DB = locals?.runtime?.env?.DB;
+const DB = (locals as any)?.runtime?.env?.DB;
 
 let exerciseData = [];
 let bookData = [];
@@ -46,10 +95,10 @@ if (DB) {
 }
 
 // 筋トレ統計の計算
-const exerciseStats = {};
-const exerciseMaxRecords = {};
-exerciseData.forEach((item) => {
-  const name = (item as any).exercise_name;
+const exerciseStats: ExerciseStats = {};
+const exerciseMaxRecords: { [key: string]: { maxWeight: number; maxCount: number } } = {};
+exerciseData.forEach((item: ExerciseItem) => {
+  const name = item.exercise_name;
   if (!exerciseStats[name]) {
     exerciseStats[name] = {
       name,
@@ -59,8 +108,8 @@ exerciseData.forEach((item) => {
       lastDate: null,
     };
   }
-  exerciseStats[name].totalCount += (item as any).count || 0;
-  exerciseStats[name].totalWeight += (item as any).weight || 0;
+  exerciseStats[name].totalCount += item.count || 0;
+  exerciseStats[name].totalWeight += item.weight || 0;
   exerciseStats[name].sessions += 1;
 
   // 最大記録の更新
@@ -70,30 +119,26 @@ exerciseData.forEach((item) => {
       maxCount: 0,
     };
   }
-  if (((item as any).weight || 0) > exerciseMaxRecords[name].maxWeight) {
-    exerciseMaxRecords[name].maxWeight = (item as any).weight || 0;
+  if ((item.weight || 0) > exerciseMaxRecords[name].maxWeight) {
+    exerciseMaxRecords[name].maxWeight = item.weight || 0;
   }
-  if (((item as any).count || 0) > exerciseMaxRecords[name].maxCount) {
-    exerciseMaxRecords[name].maxCount = (item as any).count || 0;
+  if ((item.count || 0) > exerciseMaxRecords[name].maxCount) {
+    exerciseMaxRecords[name].maxCount = item.count || 0;
   }
 
   // 最新日付の更新
   if (
     !exerciseStats[name].lastDate ||
-    (item as any).date > exerciseStats[name].lastDate
+    item.date > exerciseStats[name].lastDate
   ) {
-    exerciseStats[name].lastDate = (item as any).date;
+    exerciseStats[name].lastDate = item.date;
   }
 });
 
-const exerciseStatsArray = Object.values(exerciseStats).sort(
-  (a, b) => ((b as any).sessions || 0) - ((a as any).sessions || 0)
-);
-
 // 読書統計の計算
-const bookStats = {};
-bookData.forEach((item) => {
-  const title = (item as any).title;
+const bookStats: BookStats = {};
+bookData.forEach((item: BookItem) => {
+  const title = item.title;
   if (!bookStats[title]) {
     bookStats[title] = {
       title,
@@ -102,26 +147,22 @@ bookData.forEach((item) => {
       lastDate: null,
     };
   }
-  bookStats[title].totalPages += (item as any).pages_read || 0;
+  bookStats[title].totalPages += item.pages_read || 0;
   bookStats[title].sessions += 1;
 
   // 最新日付の更新
   if (
     !bookStats[title].lastDate ||
-    (item as any).date > bookStats[title].lastDate
+    item.date > bookStats[title].lastDate
   ) {
-    bookStats[title].lastDate = (item as any).date;
+    bookStats[title].lastDate = item.date;
   }
 });
 
-const bookStatsArray = Object.values(bookStats).sort(
-  (a, b) => ((b as any).sessions || 0) - ((a as any).sessions || 0)
-);
-
 // アウトプット統計の計算
-const outputStats = {};
-outputData.forEach((item) => {
-  const type = (item as any).type;
+const outputStats: OutputStats = {};
+outputData.forEach((item: OutputItem) => {
+  const type = item.type;
   if (!outputStats[type]) {
     outputStats[type] = {
       type,
@@ -131,24 +172,20 @@ outputData.forEach((item) => {
       lastDate: null,
     };
   }
-  outputStats[type].totalChars += (item as any).chars || 0;
+  outputStats[type].totalChars += item.chars || 0;
   outputStats[type].sessions += 1;
-  if ((item as any).is_tech) {
+  if (item.is_tech) {
     outputStats[type].techCount += 1;
   }
 
   // 最新日付の更新
   if (
     !outputStats[type].lastDate ||
-    (item as any).date > outputStats[type].lastDate
+    item.date > outputStats[type].lastDate
   ) {
-    outputStats[type].lastDate = (item as any).date;
+    outputStats[type].lastDate = item.date;
   }
 });
-
-const outputStatsArray = Object.values(outputStats).sort(
-  (a, b) => ((b as any).sessions || 0) - ((a as any).sessions || 0)
-);
 ---
 
 <Layout>

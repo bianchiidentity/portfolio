@@ -1,5 +1,10 @@
 ---
 // Header component
+type Props = {
+  currentPage?: string;
+};
+
+const { currentPage } = Astro.props;
 ---
 
 <header class="header">
@@ -12,10 +17,32 @@
     </div>
     <nav class="header-nav">
       <ul class="nav-list">
-        <li><a href="/" class="nav-link">Home</a></li>
-        <li><a href="/profile" class="nav-link">プロフィール</a></li>
-        <li><a href="/dashboard" class="nav-link">ダッシュボード</a></li>
-        <li><a href="/blog" class="nav-link">blog</a></li>
+        <li>
+          <a
+            href="/"
+            class={`nav-link ${currentPage === "home" ? "active" : ""}`}>Home</a
+          >
+        </li>
+        <li>
+          <a
+            href="/profile"
+            class={`nav-link ${currentPage === "profile" ? "active" : ""}`}
+            >プロフィール</a
+          >
+        </li>
+        <li>
+          <a
+            href="/dashboard"
+            class={`nav-link ${currentPage === "dashboard" ? "active" : ""}`}
+            >ダッシュボード</a
+          >
+        </li>
+        <li>
+          <a
+            href="/blog"
+            class={`nav-link ${currentPage === "blog" ? "active" : ""}`}>blog</a
+          >
+        </li>
       </ul>
     </nav>
     <button class="hamburger" id="hamburger" aria-label="メニュー">
@@ -27,12 +54,19 @@
 </header>
 
 <script>
-  const hamburger = document.getElementById("hamburger");
-  const nav = document.querySelector(".header-nav");
+  type HamburgerElements = {
+    hamburger: HTMLElement | null;
+    nav: Element | null;
+  };
 
-  hamburger?.addEventListener("click", () => {
-    hamburger.classList.toggle("active");
-    nav?.classList.toggle("active");
+  const elements: HamburgerElements = {
+    hamburger: document.getElementById("hamburger"),
+    nav: document.querySelector(".header-nav"),
+  };
+
+  elements.hamburger?.addEventListener("click", (): void => {
+    elements.hamburger?.classList.toggle("active");
+    elements.nav?.classList.toggle("active");
   });
 </script>
 

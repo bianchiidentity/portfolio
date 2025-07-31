@@ -1,5 +1,10 @@
 ---
 // ヒーローセクションのコンポーネント化
+type Props = {
+  images?: string[];
+}
+
+const { images = ["/mv.jpg", "/mv3.png"] } = Astro.props;
 ---
 
 <main class="hero-curve">
@@ -20,8 +25,13 @@
       fill-rule="evenodd"></path>
   </svg>
   <div class="hero-image-slider">
-    <img class="hero-bg-image active" src="/mv.jpg" alt="自画像1" />
-    <img class="hero-bg-image" src="/mv3.png" alt="自画像2" />
+    {images.map((image, index) => (
+      <img 
+        class={`hero-bg-image ${index === 0 ? 'active' : ''}`} 
+        src={image} 
+        alt={`自画像${index + 1}`} 
+      />
+    ))}
   </div>
   <div class="hero-text">
     <div class="hero-label">Webエンジニア</div>
@@ -153,16 +163,27 @@
     }
   </style>
   <script>
-    let idx = 0;
-    const images =
-      typeof window !== "undefined"
-        ? document.querySelectorAll(".hero-bg-image")
-        : [];
-    if (images.length > 1) {
-      setInterval(() => {
-        images.forEach((img, i) => img.classList.toggle("active", i === idx));
-        idx = (idx + 1) % images.length;
-      }, 4000);
+    type ImageSlider = {
+      idx: number;
+      images: NodeListOf<Element>;
+      interval: number;
+    }
+
+    const slider: ImageSlider = {
+      idx: 0,
+      images: typeof window !== "undefined" 
+        ? document.querySelectorAll(".hero-bg-image") 
+        : ([] as unknown as NodeListOf<Element>),
+      interval: 4000
+    };
+
+    if (slider.images.length > 1) {
+      setInterval((): void => {
+        slider.images.forEach((img, i) => 
+          img.classList.toggle("active", i === slider.idx)
+        );
+        slider.idx = (slider.idx + 1) % slider.images.length;
+      }, slider.interval);
     }
   </script>
 </main>

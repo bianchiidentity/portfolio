@@ -9,7 +9,6 @@ const expectedUsername = locals?.runtime?.env?.ADMIN_USERNAME;
 const expectedPassword = locals?.runtime?.env?.ADMIN_PASSWORD;
 
 let isAuthenticated = false;
-let authError = "";
 
 // local環境では認証をスキップ
 const isLocal =
@@ -27,8 +26,6 @@ if (isLocal) {
 
       if (username === expectedUsername && password === expectedPassword) {
         isAuthenticated = true;
-      } else {
-        authError = "認証情報が正しくありません";
       }
     }
   }
@@ -59,7 +56,7 @@ if (Astro.request.method === "POST") {
       messageType = "error";
     } else {
       // 直接データベースにアクセス
-      const DB = locals?.runtime?.env?.DB;
+      const DB = (locals?.runtime?.env as any)?.DB;
 
       if (!DB) {
         message = "データベース接続エラー";
@@ -74,9 +71,9 @@ if (Astro.request.method === "POST") {
               let index = 0;
 
               while (true) {
-                const exercise_name = formData.get(`exercise_name_${index}`);
-                const count = parseInt(formData.get(`count_${index}`) || "0");
-                const weight = parseInt(formData.get(`weight_${index}`) || "0");
+                const exercise_name = formData.get(`exercise_name_${index}`) as string;
+                const count = parseInt((formData.get(`count_${index}`) as string) || "0");
+                const weight = parseInt((formData.get(`weight_${index}`) as string) || "0");
 
                 if (!exercise_name) {
                   break; // 種目名がない場合は終了
@@ -104,8 +101,8 @@ if (Astro.request.method === "POST") {
               break;
 
             case "book":
-              const title = formData.get("title");
-              const pages_read = parseInt(formData.get("pages_read") || "0");
+              const title = formData.get("title") as string;
+              const pages_read = parseInt((formData.get("pages_read") as string) || "0");
 
               if (!title) {
                 message = "タイトルは必須です";
@@ -122,9 +119,9 @@ if (Astro.request.method === "POST") {
               break;
 
             case "output":
-              const type = formData.get("type");
-              const chars = parseInt(formData.get("chars") || "0");
-              const is_tech = formData.get("is_tech") === "true";
+              const type = formData.get("type") as string;
+              const chars = parseInt((formData.get("chars") as string) || "0");
+              const is_tech = (formData.get("is_tech") as string) === "true";
 
               if (!type) {
                 message = "種類は必須です";
@@ -141,7 +138,7 @@ if (Astro.request.method === "POST") {
               break;
 
             case "sleep":
-              const hours = parseFloat(formData.get("hours") || "0");
+              const hours = parseFloat((formData.get("hours") as string) || "0");
 
               await DB.prepare(
                 `INSERT INTO sleep (date, hours, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
@@ -355,10 +352,10 @@ if (Astro.request.method === "POST") {
     const dataTypeSelect = document.getElementById("dataType");
     const dataFields = document.querySelectorAll(".data-fields");
 
-    dataTypeSelect.addEventListener("change", function () {
+    dataTypeSelect?.addEventListener("change", function (this: HTMLSelectElement) {
       // すべてのフィールドを非表示
       dataFields.forEach((field) => {
-        field.style.display = "none";
+        (field as HTMLElement).style.display = "none";
       });
 
       // 選択されたデータタイプのフィールドを表示
@@ -366,7 +363,7 @@ if (Astro.request.method === "POST") {
       if (selectedType) {
         const targetField = document.getElementById(`${selectedType}-fields`);
         if (targetField) {
-          targetField.style.display = "block";
+          (targetField as HTMLElement).style.display = "block";
         }
       }
     });
@@ -380,7 +377,7 @@ if (Astro.request.method === "POST") {
       addExerciseBtn.addEventListener("click", function () {
         const exerciseItem = document.createElement("div");
         exerciseItem.className = "exercise-item";
-        exerciseItem.setAttribute("data-index", exerciseIndex);
+        exerciseItem.setAttribute("data-index", exerciseIndex.toString());
         exerciseItem.style.cssText =
           "background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%); border: 1px solid rgba(102, 126, 234, 0.15); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); backdrop-filter: blur(10px);";
 
@@ -393,14 +390,15 @@ if (Astro.request.method === "POST") {
             <label class="form-label">種目 *</label>
             <select name="exercise_name_${exerciseIndex}" class="form-select" required>
               <option value="">種目を選択してください</option>
-              ${Array.from(
-                document.querySelector('select[name="exercise_name_0"]').options
-              )
-                .map(
-                  (option) =>
+              ${(() => {
+                const select = document.querySelector('select[name="exercise_name_0"]') as HTMLSelectElement;
+                if (!select?.options) return '';
+                return Array.from(select.options)
+                  .map((option: HTMLOptionElement) =>
                     `<option value="${option.value}">${option.text}</option>`
-                )
-                .join("")}
+                  )
+                  .join("");
+              })()}
             </select>
           </div>
           <div class="form-row">
@@ -434,25 +432,27 @@ if (Astro.request.method === "POST") {
     }
 
     // 筋トレ種目の削除
-    window.removeExercise = function (button) {
+    (window as any).removeExercise = function (button: any) {
       const exerciseItem = button.closest(".exercise-item");
-      exerciseItem.remove();
+      exerciseItem?.remove();
 
       // 種目番号を再計算
       const exerciseItems = document.querySelectorAll(".exercise-item");
       exerciseItems.forEach((item, index) => {
         const numberSpan = item.querySelector(".exercise-number");
-        numberSpan.textContent = `種目 ${index + 1}`;
-        item.setAttribute("data-index", index);
+        if (numberSpan) {
+          numberSpan.textContent = `種目 ${index + 1}`;
+        }
+        item.setAttribute("data-index", index.toString());
 
         // name属性も更新
-        const select = item.querySelector("select");
-        const countInput = item.querySelector('input[name^="count_"]');
-        const weightInput = item.querySelector('input[name^="weight_"]');
+        const select = item.querySelector("select") as HTMLSelectElement;
+        const countInput = item.querySelector('input[name^="count_"]') as HTMLInputElement;
+        const weightInput = item.querySelector('input[name^="weight_"]') as HTMLInputElement;
 
-        select.name = `exercise_name_${index}`;
-        countInput.name = `count_${index}`;
-        weightInput.name = `weight_${index}`;
+        if (select) select.name = `exercise_name_${index}`;
+        if (countInput) countInput.name = `count_${index}`;
+        if (weightInput) weightInput.name = `weight_${index}`;
       });
 
       exerciseIndex = exerciseItems.length;

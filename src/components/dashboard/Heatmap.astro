@@ -28,7 +28,7 @@ const { exerciseData, bookData, outputData } = Astro.props;
   </div>
 </div>
 
-<script define:vars={{ exerciseData, bookData, outputData }}>
+<script is:inline define:vars={{ exerciseData, bookData, outputData }}>
   // コントリビューショングラフの作成
   function createContributionGraph() {
     const grid = document.getElementById("contributionGrid");

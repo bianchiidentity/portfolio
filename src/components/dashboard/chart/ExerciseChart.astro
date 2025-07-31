@@ -1,7 +1,5 @@
 ---
 // 筋トレグラフコンポーネント
-import { Chart } from "chart.js/auto";
-
 export type Props = {
   exerciseData: any[];
 };
@@ -14,7 +12,7 @@ const { exerciseData } = Astro.props;
   <canvas id="exerciseChart" width="400" height="200"></canvas>
 </div>
 
-<script define:vars={{ exerciseData }}>
+<script is:inline define:vars={{ exerciseData }}>
   // Chart.jsが読み込まれているか確認
   function initializeExerciseChart() {
     if (typeof Chart === "undefined") {

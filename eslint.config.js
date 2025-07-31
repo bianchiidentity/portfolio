@@ -1,12 +1,18 @@
 import eslintPluginAstro from 'eslint-plugin-astro';
+import globals from "globals";
+import tseslint from "typescript-eslint";
+
 export default [
-  // add more generic rule sets here, such as:
-  // js.configs.recommended,
+  ...tseslint.configs.recommended,
   ...eslintPluginAstro.configs.recommended,
   {
-    rules: {
-      // override/add rules settings here, such as:
-      // "astro/no-set-html-directive": "error"
-    }
-  }
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
+  { rules: { "no-console": "error" } },
+  { ignores: ["dist/**", ".astro", "public/pagefind/**"] },
 ];

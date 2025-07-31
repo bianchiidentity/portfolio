@@ -1,4 +1,13 @@
-export const EXERCISE_LIST = [
+// Exercise type definition
+export type Exercise = {
+  id: number;
+  name: string;
+  displayOrder: number;
+  icon: string;
+  exerciseFactor: number;
+}
+
+export const EXERCISE_LIST: Exercise[] = [
   {
     id: 1,
     name: "ベンチプレス",
