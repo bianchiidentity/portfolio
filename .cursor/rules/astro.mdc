@@ -1,0 +1,19 @@
+---
+description: astro rules
+globs:
+  - "**/*.astro"
+  - "astro.config.mjs"
+  - "src/**/*.ts"
+alwaysApply: false
+---
+
+## 1. コンポーネント構造
+- 各コンポーネントは `.astro` ファイル1つに責務を絞る
+- 型安全にする
+- `<script>` ブロックはできる限り `---` ブロック内に書く
+- `<script>` を template 内部に多用しない
+
+## 2. import
+- import type と import は明確に使い分ける。
+- グローバルな定数や設定は @consts/ や @types/ に置き、相対パスを減らす。
+- Astro ファイルで Node.js の標準モジュール (fs, pathなど) は使わない。
