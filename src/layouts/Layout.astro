@@ -2,12 +2,13 @@
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { SITE_TITLE } from "../consts";
+import "../styles/global.css";
 
 type Props = {
   title?: string;
   description?: string;
   image?: string;
-}
+};
 
 const { title = SITE_TITLE, description, image } = Astro.props;
 ---
@@ -16,7 +17,10 @@ const { title = SITE_TITLE, description, image } = Astro.props;
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
@@ -24,20 +28,47 @@ const { title = SITE_TITLE, description, image } = Astro.props;
     {image && <meta property="og:image" content={image} />}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
-  <body style="min-height:100vh; display:flex; flex-direction:column;">
+  <body class="min-h-screen flex flex-col">
     <Header />
-    <div style="padding-top: 10vh; flex:1;"><slot /></div>
+    <div class="pt-[10vh] flex-1"><slot /></div>
     <Footer />
   </body>
 </html>
 
 <style>
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    padding-top: 0;
-    background: #fff;
+  @layer base {
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      padding-top: 0;
+      background: #fff;
+      font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+      line-height: 1.6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* レスポンシブフォントサイズ */
+    @media (max-width: 768px) {
+      html {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      html {
+        font-size: 12px;
+      }
+    }
   }
 </style>

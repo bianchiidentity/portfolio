@@ -9,22 +9,34 @@ export type Props = {
 const { exerciseData, bookData, outputData } = Astro.props;
 ---
 
-<div class="contribution-graph">
-  <div class="contribution-header">
-    <span class="contribution-title">過去1年間の活動</span>
-    <div class="contribution-legend">
+<div
+  class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden w-full min-w-0"
+>
+  <div class="flex justify-between items-center mb-4">
+    <span class="text-lg font-bold text-gray-800">過去1年間の活動</span>
+    <div class="flex items-center gap-2 text-sm text-gray-600">
       <span>少ない</span>
-      <div class="legend-squares">
-        <div class="legend-square exercise"></div>
-        <div class="legend-square reading"></div>
-        <div class="legend-square output"></div>
+      <div class="flex gap-1">
+        <div class="w-3 h-3 bg-gray-200 rounded-sm"></div>
+        <div class="w-3 h-3 bg-green-300 rounded-sm"></div>
+        <div class="w-3 h-3 bg-green-500 rounded-sm"></div>
+        <div class="w-3 h-3 bg-green-600 rounded-sm"></div>
+        <div class="w-3 h-3 bg-green-800 rounded-sm"></div>
       </div>
       <span>多い</span>
     </div>
   </div>
-  <div class="contribution-container">
-    <div class="contribution-months" id="contributionMonths"></div>
-    <div class="contribution-grid" id="contributionGrid"></div>
+  <div class="w-full">
+    <div
+      class="relative h-6 mb-2 overflow-hidden w-full flex justify-start items-center"
+      id="contributionMonths"
+    >
+    </div>
+    <div
+      class="flex flex-row gap-[3px] overflow-hidden min-h-[140px] p-0 bg-transparent relative items-start w-full flex-nowrap min-w-0 justify-start"
+      id="contributionGrid"
+    >
+    </div>
   </div>
 </div>
 
@@ -98,220 +110,84 @@ const { exerciseData, bookData, outputData } = Astro.props;
     // 週ごとにデータを整理
     const weeks = [];
     let currentWeek = [];
-    let currentWeekStart = null;
 
-    allDates.forEach((dateStr) => {
-      const date = new Date(dateStr);
-      const dayOfWeek = date.getDay(); // 0 = 日曜日, 1 = 月曜日, ...
-
-      // 週の開始を決定（月曜日開始）
-      if (currentWeekStart === null) {
-        currentWeekStart = new Date(date);
-        // 月曜日になるまで遡る
-        while (currentWeekStart.getDay() !== 1) {
-          currentWeekStart.setDate(currentWeekStart.getDate() - 1);
-        }
-      }
-
-      // 新しい週の開始かチェック
-      const weekStart = new Date(currentWeekStart);
-      weekStart.setDate(weekStart.getDate() + 7);
-      if (date >= weekStart) {
-        if (currentWeek.length > 0) {
-          weeks.push(currentWeek);
-        }
+    allDates.forEach((date) => {
+      currentWeek.push(date);
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
         currentWeek = [];
-        currentWeekStart = new Date(date);
-        // 月曜日になるまで遡る
-        while (currentWeekStart.getDay() !== 1) {
-          currentWeekStart.setDate(currentWeekStart.getDate() - 1);
-        }
       }
-
-      // 活動データを取得
-      const activities = activityData[dateStr] || {
-        exercise: 0,
-        reading: 0,
-        output: 0,
-      };
-      const activityCount =
-        activities.exercise + activities.reading + activities.output;
-
-      currentWeek.push({
-        date: dateStr,
-        activityCount,
-        activities,
-      });
     });
 
-    // 最後の週を追加
+    // 最後の週が7日未満の場合も追加
     if (currentWeek.length > 0) {
       weeks.push(currentWeek);
     }
 
-    // 各週を7日分に統一（不足分は空の日で埋める）
-    weeks.forEach((week) => {
-      while (week.length < 7) {
-        const lastDate = week[week.length - 1];
-        const nextDate = new Date(lastDate.date);
-        nextDate.setDate(nextDate.getDate() + 1);
-        week.push({
-          date: nextDate.toISOString().split("T")[0],
-          activityCount: 0,
-          activities: { exercise: 0, reading: 0, output: 0 },
+    // 月のラベルを追加
+    const monthLabels = [];
+    let currentMonth = "";
+    let currentMonthIndex = 0;
+
+    weeks.forEach((week, weekIndex) => {
+      week.forEach((date) => {
+        const month = new Date(date).toLocaleDateString("ja-JP", {
+          month: "short",
         });
-      }
+        if (month !== currentMonth) {
+          currentMonth = month;
+          monthLabels.push({
+            month: month,
+            index: weekIndex,
+          });
+        }
+      });
     });
 
-    // 月ラベルを生成（グリッドの横幅と1日を含むグリッドの位置で計算）
-    if (monthsContainer) {
-      const monthNames = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ];
+    // 月のラベルを表示
+    monthLabels.forEach((label) => {
+      const monthElement = document.createElement("div");
+      monthElement.className =
+        "text-xs text-gray-500 text-center whitespace-nowrap absolute top-0 w-[76px]";
+      monthElement.style.left = `${label.index * 19}px`;
+      monthElement.textContent = label.month;
+      monthsContainer.appendChild(monthElement);
+    });
 
-      // グリッドの横幅を取得
-      const gridWidth = grid?.offsetWidth || 800;
-      const weekWidth = 19; // 1週の幅
-      const marginRight = 3; // margin-rightのみ
-      const actualWeekWidth = weekWidth + marginRight; // 実際の1週の幅（marginのみ含む）
-
-      // 各週をチェックして1日を含む週を特定
-      const monthsWithFirstDay = [];
-      weeks.forEach((week, weekIndex) => {
-        const hasFirstDay = week.some((day) => {
-          const date = new Date(day.date);
-          return date.getDate() === 1;
-        });
-
-        if (hasFirstDay) {
-          const firstDayInWeek = week.find((day) => {
-            const date = new Date(day.date);
-            return date.getDate() === 1;
-          });
-          if (firstDayInWeek) {
-            const date = new Date(firstDayInWeek.date);
-            const monthIndex = date.getMonth();
-            const monthName = monthNames[monthIndex];
-
-            // 1日を含む週の位置を計算（gapとmargin含む）
-            const weekPosition = (weekIndex + 1) * actualWeekWidth - 11; // 11px左に調整
-
-            monthsWithFirstDay.push({
-              monthName,
-              monthIndex,
-              weekIndex,
-              weekPosition,
-            });
-          }
-        }
-      });
-
-      // 月ラベルを配置
-      monthsWithFirstDay.forEach((monthInfo, index) => {
-        const monthLabel = document.createElement("div");
-        monthLabel.className = "contribution-month";
-        monthLabel.textContent = monthInfo.monthName;
-
-        // 次の月までの幅を計算（gapとmargin含む）
-        const nextMonth = monthsWithFirstDay[index + 1];
-        const monthWidth = 0; // すべての月ラベルの幅を22pxに固定
-
-        monthLabel.style.position = "absolute";
-        monthLabel.style.left = `${monthInfo.weekPosition}px`;
-        monthLabel.style.width = `${monthWidth}px`;
-        monthLabel.style.textAlign = "center";
-
-        monthsContainer.appendChild(monthLabel);
-      });
-    }
-
-    // HTMLを生成
+    // 週ごとにグリッドを作成
     weeks.forEach((week) => {
       const weekElement = document.createElement("div");
-      weekElement.className = "contribution-week";
+      weekElement.className =
+        "flex flex-col gap-[1px] min-h-4 mr-[3px] items-center justify-start flex-shrink-0 box-border";
 
-      // グリッドの幅に合わせてスケール調整
-      const containerWidth = grid.offsetWidth || 800; // フォールバック値
-      const totalWeekWidth = weeks.length * 19; // 19px per week
-      const scale = Math.min(1, containerWidth / totalWeekWidth);
-      const scaledGap = Math.max(1, 2 * scale); // 最小1px
-
-      weekElement.style.gap = `${scaledGap}px`;
-      weekElement.style.marginRight = `${scaledGap}px`;
-
-      week.forEach((day) => {
+      week.forEach((date) => {
         const dayElement = document.createElement("div");
-        dayElement.className = "contribution-day";
+        dayElement.className =
+          "w-4 h-4 rounded-sm border border-black/10 bg-gray-200 transition-all duration-200 flex-shrink-0 shadow-sm block min-w-4 min-h-4 box-border hover:scale-120 hover:z-10";
 
-        // 活動量に基づいて色を決定
-        let backgroundColor = "#ebedf0";
-        let borderColor = "#e1e4e8";
+        const activity = activityData[date] || {
+          exercise: 0,
+          reading: 0,
+          output: 0,
+        };
+        const totalActivity =
+          activity.exercise + activity.reading + activity.output;
 
-        if (day.activityCount === 0) {
-          backgroundColor = "#ebedf0";
-          borderColor = "#e1e4e8";
-        } else if (day.activityCount === 1) {
-          backgroundColor = "#9be9a8";
-          borderColor = "#9be9a8";
-        } else if (day.activityCount === 2) {
-          backgroundColor = "#40c463";
-          borderColor = "#40c463";
-        } else if (day.activityCount === 3) {
-          backgroundColor = "#30a14e";
-          borderColor = "#30a14e";
+        // 活動レベルに基づいてクラスを設定
+        if (totalActivity === 0) {
+          dayElement.className += " bg-gray-200 border-gray-300";
+        } else if (totalActivity === 1) {
+          dayElement.className += " bg-green-300 border-green-300";
+        } else if (totalActivity === 2) {
+          dayElement.className += " bg-green-500 border-green-500";
+        } else if (totalActivity === 3) {
+          dayElement.className += " bg-green-600 border-green-600";
         } else {
-          backgroundColor = "#216e39";
-          borderColor = "#216e39";
+          dayElement.className += " bg-green-800 border-green-800";
         }
 
-        // グリッドの幅に合わせてスケール調整
-        const containerWidth = grid.offsetWidth || 800; // フォールバック値
-        const totalWeekWidth = weeks.length * 19; // 19px per week
-        const scale = Math.min(1, containerWidth / totalWeekWidth);
-        const scaledSize = Math.max(8, 16 * scale); // 最小8px
-
-        // 直接スタイルを適用
-        dayElement.style.width = `${scaledSize}px`;
-        dayElement.style.height = `${scaledSize}px`;
-        dayElement.style.backgroundColor = backgroundColor;
-        dayElement.style.border = `1px solid ${borderColor}`;
-        dayElement.style.borderRadius = "2px";
-        dayElement.style.display = "block";
-        dayElement.style.flexShrink = "0";
-
-        // 詳細なツールチップを追加
-        const date = new Date(day.date);
-        const month = date.getMonth() + 1;
-        const dayOfMonth = date.getDate();
-        const year = date.getFullYear();
-
-        let tooltipText = `${year}年${month}月${dayOfMonth}日`;
-        if (day.activityCount === 0) {
-          tooltipText += "\n活動なし";
-        } else {
-          tooltipText += "\n活動内容:";
-          if (day.activities.exercise > 0) {
-            tooltipText += `\n・筋トレ: ${day.activities.exercise}回`;
-          }
-          if (day.activities.reading > 0) {
-            tooltipText += `\n・読書: ${day.activities.reading}回`;
-          }
-          if (day.activities.output > 0) {
-            tooltipText += `\n・アウトプット: ${day.activities.output}回`;
-          }
-        }
-
+        // ツールチップを追加
+        const tooltipText = `${date}\n筋トレ: ${activity.exercise}回\n読書: ${activity.reading}回\nアウトプット: ${activity.output}回`;
         dayElement.title = tooltipText;
 
         weekElement.appendChild(dayElement);
@@ -325,169 +201,11 @@ const { exerciseData, bookData, outputData } = Astro.props;
   document.addEventListener("DOMContentLoaded", function () {
     createContributionGraph();
   });
+
+  // フォールバック: DOMContentLoadedが既に発火している場合
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", createContributionGraph);
+  } else {
+    createContributionGraph();
+  }
 </script>
-
-<style>
-  /* コントリビューショングラフ */
-  .contribution-graph {
-    width: 100%;
-    overflow: hidden;
-    min-width: 0;
-  }
-
-  .contribution-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .contribution-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #374151;
-  }
-
-  .contribution-legend {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    color: #6b7280;
-  }
-
-  .legend-squares {
-    display: flex;
-    gap: 2px;
-  }
-
-  .legend-square {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-  }
-
-  .legend-square.exercise {
-    background-color: #39d353;
-  }
-
-  .legend-square.reading {
-    background-color: #39d353;
-  }
-
-  .legend-square.output {
-    background-color: #39d353;
-  }
-
-  .contribution-container {
-    position: relative;
-    width: 100%;
-    max-width: 100%;
-    min-height: 140px;
-    padding: 15px 25px 15px 15px;
-    background-color: #ffffff;
-    overflow: hidden;
-    min-width: 0;
-    box-sizing: border-box;
-    margin: 0 auto; /* 横方向中央揃え */
-  }
-
-  .contribution-months {
-    position: relative;
-    height: 25px;
-    margin-bottom: 10px;
-    padding: 0;
-    overflow: hidden;
-    width: 100%;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-  }
-
-  .contribution-month {
-    font-size: 12px;
-    color: #586069;
-    text-align: center;
-    white-space: nowrap;
-    position: absolute;
-    top: 0;
-    width: 76px; /* 4グリッド分の幅 (19px × 4) */
-  }
-
-  .contribution-grid {
-    display: flex;
-    flex-direction: row;
-    gap: 3px;
-    overflow: hidden;
-    min-height: 140px;
-    padding: 0;
-    background-color: transparent;
-    position: relative;
-    align-items: flex-start;
-    width: 100%;
-    flex-wrap: nowrap;
-    min-width: 0;
-    justify-content: flex-start;
-  }
-
-  .contribution-week {
-    display: flex;
-    flex-direction: column;
-    gap: 1px; /* 縦方向のgapを1pxに設定 */
-    min-height: 16px;
-    margin-right: 3px;
-    align-items: center;
-    justify-content: flex-start;
-    flex-shrink: 0;
-    box-sizing: border-box;
-  }
-
-  .contribution-day {
-    width: 16px;
-    height: 16px;
-    border-radius: 2px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background-color: #ebedf0;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    display: block;
-    min-width: 16px;
-    min-height: 16px;
-    box-sizing: border-box;
-  }
-
-  .contribution-day:hover {
-    transform: scale(1.2);
-    z-index: 10;
-  }
-
-  /* 色の濃さ */
-  .contribution-day.no-activity {
-    background-color: #ebedf0 !important;
-    border: 1px solid #e1e4e8 !important;
-  }
-
-  .contribution-day.low-activity {
-    background-color: #9be9a8;
-    border: 1px solid #9be9a8;
-  }
-
-  .contribution-day.medium-activity {
-    background-color: #40c463;
-    border: 1px solid #40c463;
-  }
-
-  .contribution-day.high-activity {
-    background-color: #30a14e;
-    border: 1px solid #30a14e;
-  }
-
-  .contribution-day.very-high-activity {
-    background-color: #216e39;
-    border: 1px solid #216e39;
-  }
-</style>

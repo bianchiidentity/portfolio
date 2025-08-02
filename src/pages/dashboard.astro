@@ -96,42 +96,34 @@ if (DB) {
 
 // 筋トレ統計の計算
 const exerciseStats: ExerciseStats = {};
-const exerciseMaxRecords: { [key: string]: { maxWeight: number; maxCount: number } } = {};
+const exerciseMaxRecords: {
+  [key: string]: { maxWeight: number; maxCount: number };
+} = {};
 exerciseData.forEach((item: ExerciseItem) => {
-  const name = item.exercise_name;
-  if (!exerciseStats[name]) {
-    exerciseStats[name] = {
-      name,
+  const exerciseName = item.exercise_name;
+  if (!exerciseStats[exerciseName]) {
+    exerciseStats[exerciseName] = {
+      name: exerciseName,
       totalCount: 0,
       totalWeight: 0,
       sessions: 0,
       lastDate: null,
     };
   }
-  exerciseStats[name].totalCount += item.count || 0;
-  exerciseStats[name].totalWeight += item.weight || 0;
-  exerciseStats[name].sessions += 1;
+  exerciseStats[exerciseName].totalCount += item.count;
+  exerciseStats[exerciseName].totalWeight += item.weight * item.count;
+  exerciseStats[exerciseName].sessions += 1;
+  exerciseStats[exerciseName].lastDate = item.date;
 
   // 最大記録の更新
-  if (!exerciseMaxRecords[name]) {
-    exerciseMaxRecords[name] = {
-      maxWeight: 0,
-      maxCount: 0,
-    };
+  if (!exerciseMaxRecords[exerciseName]) {
+    exerciseMaxRecords[exerciseName] = { maxWeight: 0, maxCount: 0 };
   }
-  if ((item.weight || 0) > exerciseMaxRecords[name].maxWeight) {
-    exerciseMaxRecords[name].maxWeight = item.weight || 0;
+  if (item.weight > exerciseMaxRecords[exerciseName].maxWeight) {
+    exerciseMaxRecords[exerciseName].maxWeight = item.weight;
   }
-  if ((item.count || 0) > exerciseMaxRecords[name].maxCount) {
-    exerciseMaxRecords[name].maxCount = item.count || 0;
-  }
-
-  // 最新日付の更新
-  if (
-    !exerciseStats[name].lastDate ||
-    item.date > exerciseStats[name].lastDate
-  ) {
-    exerciseStats[name].lastDate = item.date;
+  if (item.count > exerciseMaxRecords[exerciseName].maxCount) {
+    exerciseMaxRecords[exerciseName].maxCount = item.count;
   }
 });
 
@@ -141,22 +133,15 @@ bookData.forEach((item: BookItem) => {
   const title = item.title;
   if (!bookStats[title]) {
     bookStats[title] = {
-      title,
+      title: title,
       totalPages: 0,
       sessions: 0,
       lastDate: null,
     };
   }
-  bookStats[title].totalPages += item.pages_read || 0;
+  bookStats[title].totalPages += item.pages_read;
   bookStats[title].sessions += 1;
-
-  // 最新日付の更新
-  if (
-    !bookStats[title].lastDate ||
-    item.date > bookStats[title].lastDate
-  ) {
-    bookStats[title].lastDate = item.date;
-  }
+  bookStats[title].lastDate = item.date;
 });
 
 // アウトプット統計の計算
@@ -165,36 +150,47 @@ outputData.forEach((item: OutputItem) => {
   const type = item.type;
   if (!outputStats[type]) {
     outputStats[type] = {
-      type,
+      type: type,
       totalChars: 0,
       sessions: 0,
       techCount: 0,
       lastDate: null,
     };
   }
-  outputStats[type].totalChars += item.chars || 0;
+  outputStats[type].totalChars += item.chars;
   outputStats[type].sessions += 1;
   if (item.is_tech) {
     outputStats[type].techCount += 1;
   }
-
-  // 最新日付の更新
-  if (
-    !outputStats[type].lastDate ||
-    item.date > outputStats[type].lastDate
-  ) {
-    outputStats[type].lastDate = item.date;
-  }
+  outputStats[type].lastDate = item.date;
 });
 ---
 
 <Layout>
-  <main class="dashboard-container">
-    <div class="dashboard-header">
-      <h1 class="dashboard-title">ライフログダッシュボード</h1>
+  <main
+    class="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-600 p-4 relative overflow-x-hidden w-full box-border"
+  >
+    <div
+      class='absolute inset-0 bg-[url(&apos;data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>&apos;)] pointer-events-none'
+    >
     </div>
 
-    <div class="main-content">
+    <div class="text-center mb-6 relative z-1 w-full box-border">
+      <h1
+        class="text-4xl md:text-5xl font-extrabold text-white mb-1 drop-shadow-lg animate-fadeInUp"
+      >
+        アクティビティダッシュボード
+      </h1>
+      <p
+        class="text-base text-white/90 font-light m-0 animate-fadeInUp animation-delay-200"
+      >
+        日々の活動を可視化して、継続的な成長をサポート
+      </p>
+    </div>
+
+    <div
+      class="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-[1400px] w-full mx-auto mb-4 relative z-1 animate-fadeInUp animation-delay-300 min-h-[60vh]"
+    >
       <ActivitySummary
         exerciseData={exerciseData}
         bookData={bookData}
@@ -207,9 +203,15 @@ outputData.forEach((item: OutputItem) => {
       <ActivityCharts exerciseData={exerciseData} bookData={bookData} />
     </div>
 
-    <section class="calendar-section-main">
-      <h2 class="calendar-title">📅 活動カレンダー</h2>
-      <div class="calendar-card">
+    <section
+      class="max-w-[1400px] mx-auto mb-4 relative z-1 animate-fadeInUp animation-delay-400 w-full box-border"
+    >
+      <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
+        📅 活動カレンダー
+      </h2>
+      <div
+        class="bg-white/95 rounded-xl p-6 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 overflow-hidden w-full min-w-0 min-h-[200px] mr-4"
+      >
         <Heatmap
           exerciseData={exerciseData}
           bookData={bookData}
@@ -217,9 +219,22 @@ outputData.forEach((item: OutputItem) => {
         />
       </div>
     </section>
-    <section class="logs-section">
-      <h2 class="logs-title">📋 詳細ログ</h2>
-      <div class="logs-grid">
+
+    <section
+      class="max-w-[1400px] mx-auto relative z-1 animate-fadeInUp animation-delay-400 mt-4"
+    >
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+        <h2 class="text-2xl font-bold text-white m-0 drop-shadow-lg">
+          📋 詳細ログ
+        </h2>
+        <a
+          href="/input"
+          class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl no-underline font-semibold text-base transition-all duration-300 shadow-lg hover:-translate-y-0.5 hover:shadow-xl"
+        >
+          ＋ データを追加
+        </a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <ExerciseLog exerciseData={exerciseData} />
         <BookLog bookData={bookData} />
         <OutputLog outputData={outputData} />
@@ -229,184 +244,59 @@ outputData.forEach((item: OutputItem) => {
 </Layout>
 
 <style>
-  .dashboard-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 1rem;
-    position: relative;
-    overflow-x: hidden;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .dashboard-container::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-    pointer-events: none;
-  }
-
-  .dashboard-header {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .dashboard-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: white;
-    margin-bottom: 0.25rem;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    animation: fadeInUp 0.8s ease-out;
-  }
-
-  .dashboard-subtitle {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 300;
-    margin: 0;
-    animation: fadeInUp 0.8s ease-out 0.2s both;
-  }
-
-  /* メインコンテンツエリア */
-  .main-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    max-width: 1400px;
-    width: 100%;
-    margin: 0 auto 1rem auto;
-    position: relative;
-    z-index: 1;
-    animation: fadeInUp 0.8s ease-out 0.3s both;
-    min-height: 60vh;
-  }
-
-  /* ログセクション */
-  .logs-section {
-    max-width: 1400px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
-    animation: fadeInUp 0.8s ease-out 0.4s both;
-    margin-top: 1rem;
-  }
-
-  .logs-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-  }
-
-  .logs-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: white;
-    margin: 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  }
-
-  .add-btn {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-  }
-
-  .add-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  }
-
-  .logs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .dashboard-title {
-      font-size: 2.5rem;
+  @layer components {
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .logs-grid {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
+    .animate-fadeInUp {
+      animation: fadeInUp 0.8s ease-out;
     }
 
-    .logs-header {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-  }
-
-  /* カレンダーセクション */
-  .calendar-section-main {
-    max-width: 1400px;
-    margin: 0 auto 1rem auto;
-    position: relative;
-    z-index: 1;
-    animation: fadeInUp 0.8s ease-out 0.4s both;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .calendar-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #374151;
-    margin-bottom: 1rem;
-    text-align: center;
-  }
-
-  .calendar-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-    overflow: hidden;
-    width: 100%;
-    min-width: 0;
-    min-height: 200px;
-    margin-right: 1rem;
-  }
-
-  @media (max-width: 480px) {
-    .dashboard-container {
-      padding: 1rem 0.5rem;
+    .animation-delay-200 {
+      animation-delay: 0.2s;
     }
 
-    .dashboard-title {
-      font-size: 2rem;
+    .animation-delay-300 {
+      animation-delay: 0.3s;
+    }
+
+    .animation-delay-400 {
+      animation-delay: 0.4s;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-title {
+        font-size: 2.5rem;
+      }
+
+      .logs-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .logs-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .dashboard-container {
+        padding: 1rem 0.5rem;
+      }
+
+      .dashboard-title {
+        font-size: 2rem;
+      }
     }
   }
 </style>

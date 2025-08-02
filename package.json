@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "npx wrangler dev",
     "build": "astro check && tsc --noEmit && astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -14,8 +14,10 @@
     "@astrojs/check": "^0.9.4",
     "@astrojs/cloudflare": "^12.6.0",
     "@astrojs/mdx": "^4.3.1",
+    "@tailwindcss/vite": "^4.1.11",
     "astro": "^5.11.0",
-    "chart.js": "^4.5.0"
+    "chart.js": "^4.5.0",
+    "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

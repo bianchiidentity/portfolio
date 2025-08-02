@@ -2,273 +2,123 @@
 // 略歴や画像パスは必要に応じてprops化できますが、今回は固定値で作成します。
 ---
 
-<section class="profile-wide-section">
-  <div class="profile-wide-inner">
-    <div class="profile-wide-photo">
-      <img src="/mv.jpg" alt="プロフィール写真" />
+<section
+  class="w-screen bg-[#fcfaf7] py-10 pb-15 border-t-4 border-orange-500 flex justify-center"
+>
+  <div
+    class="flex flex-col lg:flex-row items-start max-w-[1400px] w-[98vw] gap-5 m-0 mx-auto justify-start"
+  >
+    <div
+      class="flex-shrink-0 w-full lg:w-1/5 flex items-start justify-center ml-0 mr-0 lg:mr-5 mb-5 lg:mb-0"
+    >
+      <img
+        src="/mv.jpg"
+        alt="プロフィール写真"
+        class="w-[200px] h-[200px] lg:w-[260px] lg:h-[260px] object-cover rounded-full border-4 lg:border-7 border-orange-500 bg-white shadow-lg"
+      />
     </div>
-    <div class="profile-wide-bio">
-      <h2 class="profile-wide-title">
-        <span class="profile-wide-furigana">かわさき こうじ</span><br />
+    <div
+      class="flex-shrink-0 w-full lg:w-4/5 max-w-[1200px] text-gray-800 bg-white rounded-2xl shadow-md py-7 px-8 pb-6 ml-0 z-2 relative"
+    >
+      <h2
+        class="text-xl lg:text-2xl font-bold mb-0.5 leading-tight tracking-wide text-gray-800"
+      >
+        <span
+          class="text-xs text-orange-500 font-medium tracking-widest mb-0.5 inline-block"
+          >かわさき こうじ</span
+        ><br />
         川崎 浩史／エンジニア・セキュリティ技術者
       </h2>
-      <hr class="profile-wide-divider" />
-      <p class="profile-wide-lead">
+      <hr class="border-none border-t-2 border-orange-500 my-2 w-15" />
+      <p class="text-sm lg:text-base leading-[2.1] mb-4 text-gray-700">
         宮崎県宮崎市生まれ。国立都城工業高等専門学校卒業後、東京理科大学数学科に通いながら、株式会社ヘマタイトにてWebアプリケーション開発に従事。以降、スタートアップや中堅企業にてサーバサイド・インフラ・セキュリティ分野で活躍。2022年には経済産業省「福岡未踏プロジェクト」に採択され、オンラインゲームの不正対策システムを提案・発表。不正を許さない信念を軸に、社会に貢献するシステム開発を続けている。
       </p>
-      <div class="profile-wide-info-grid">
+      <div class="flex flex-col lg:flex-row flex-wrap gap-4 lg:gap-6 mb-4">
         <div>
-          <div class="profile-wide-info-label icon-large">🎂 生年月日</div>
-          <div class="profile-wide-info-value">平成9年(1997年) 8月1日</div>
+          <div
+            class="text-sm lg:text-base text-orange-500 font-bold mb-0.5 flex items-center gap-1 text-base lg:text-lg leading-tight"
+          >
+            🎂 生年月日
+          </div>
+          <div class="text-xs lg:text-sm text-gray-600">
+            平成9年(1997年) 8月1日
+          </div>
         </div>
         <div>
-          <div class="profile-wide-info-label icon-large">🎓 学歴</div>
-          <div class="profile-wide-info-value">
+          <div
+            class="text-sm lg:text-base text-orange-500 font-bold mb-0.5 flex items-center gap-1 text-base lg:text-lg leading-tight"
+          >
+            🎓 学歴
+          </div>
+          <div class="text-xs lg:text-sm text-gray-600">
             国立都城工業高等専門学校 卒業(2018年3月)<br />
             東京理科大学理学部第二部 数学科卒業(2023年3月)
           </div>
         </div>
         <div>
-          <div class="profile-wide-info-label icon-large">🧑‍💻 趣味</div>
-          <div class="profile-wide-info-value">
+          <div
+            class="text-sm lg:text-base text-orange-500 font-bold mb-0.5 flex items-center gap-1 text-base lg:text-lg leading-tight"
+          >
+            🧑‍💻 趣味
+          </div>
+          <div class="text-xs lg:text-sm text-gray-600">
             読書, ゲーム, 筋トレ, グラススキー
           </div>
         </div>
       </div>
-      <div class="profile-wide-section-block">
-        <div class="profile-wide-section-title">現職</div>
-        <ul>
+      <div class="mb-4">
+        <div class="text-base lg:text-lg text-orange-500 font-bold mb-2">
+          現職
+        </div>
+        <ul
+          class="list-disc list-inside text-xs lg:text-sm text-gray-600 space-y-1"
+        >
           <li>Webエンジニア</li>
           <li>セキュリティ技術者</li>
           <li>福岡未踏プロジェクト採択者(第1期)</li>
         </ul>
       </div>
-      <div class="profile-wide-section-block">
-        <div class="profile-wide-section-title">専門分野</div>
-        <ul>
+      <div class="mb-4">
+        <div class="text-base lg:text-lg text-orange-500 font-bold mb-2">
+          専門分野
+        </div>
+        <ul
+          class="list-disc list-inside text-xs lg:text-sm text-gray-600 space-y-1"
+        >
           <li>Webアプリケーション開発(Python, TypeScript, Rust, React)</li>
           <li>インフラ構築(AWS, GCP, Azure, Terraform)</li>
           <li>セキュリティ関連開発(CTF問題作成・大会運営)</li>
           <li>顧客折衝・要件定義・改善提案</li>
         </ul>
       </div>
-      <div class="profile-wide-section-block">
-        <div class="profile-wide-section-title">実績</div>
-        <ul>
+      <div class="mb-4">
+        <div class="text-base lg:text-lg text-orange-500 font-bold mb-2">
+          実績
+        </div>
+        <ul
+          class="list-disc list-inside text-xs lg:text-sm text-gray-600 space-y-1"
+        >
           <li>国内外のWebサービス開発・運用保守を一貫して担当</li>
           <li>英語による現地スタッフとの開発経験あり(フィリピン)</li>
           <li>オンラインゲーム向け不正解析システムの開発・発表(福岡未踏)</li>
         </ul>
       </div>
-      <div class="profile-wide-detail-btn-wrap">
-        <a href="/profile" class="profile-wide-detail-btn">
+      <div class="flex flex-col sm:flex-row gap-4">
+        <a
+          href="/profile"
+          class="inline-flex items-center justify-center gap-2 px-4 lg:px-6 py-3 bg-orange-500 text-white font-bold rounded-lg shadow-md hover:bg-orange-600 transition-colors duration-200 no-underline text-sm lg:text-base"
+        >
           詳細プロフィールを見る
-          <span aria-hidden="true" class="profile-wide-detail-btn-icon">→</span>
+          <span aria-hidden="true" class="text-base lg:text-lg">→</span>
         </a>
         <a
           href="/blog"
-          class="profile-wide-detail-btn"
-          style="margin-left:1em;"
+          class="inline-flex items-center justify-center gap-2 px-4 lg:px-6 py-3 bg-orange-500 text-white font-bold rounded-lg shadow-md hover:bg-orange-600 transition-colors duration-200 no-underline text-sm lg:text-base"
         >
           ブログ
-          <span aria-hidden="true" class="profile-wide-detail-btn-icon">📝</span
-          >
+          <span aria-hidden="true" class="text-base lg:text-lg">📝</span>
         </a>
       </div>
     </div>
   </div>
 </section>
-
-<style>
-  .profile-wide-section {
-    width: 100vw;
-    background: #fcfaf7;
-    padding: 4vw 0 6vw 0;
-    border-top: 4px solid #e67e22;
-    display: flex;
-    justify-content: center;
-  }
-  .profile-wide-inner {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    max-width: 1400px;
-    width: 98vw;
-    gap: 2vw;
-    margin: 0 auto;
-    justify-content: flex-start;
-  }
-  .profile-wide-photo {
-    flex: 0 0 20%;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    margin-left: 0;
-    margin-right: 2vw;
-  }
-  .profile-wide-photo img {
-    width: 260px;
-    height: 260px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 7px solid #e67e22;
-    background: #fff;
-    box-shadow: 0 4px 24px rgba(230, 126, 34, 0.15);
-  }
-  .profile-wide-bio {
-    flex: 0 0 80%;
-    max-width: 1200px;
-    color: #222;
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
-    padding: 2.8em 3em 2.2em 3em;
-    margin-left: 0;
-    z-index: 2;
-    position: relative;
-  }
-  .profile-wide-title {
-    font-size: 2.2rem;
-    font-weight: bold;
-    margin-bottom: 0.2em;
-    line-height: 1.2;
-    letter-spacing: 0.04em;
-    color: #222;
-  }
-  .profile-wide-furigana {
-    font-size: 1.2rem;
-    color: #e67e22;
-    font-weight: 500;
-    letter-spacing: 0.15em;
-    margin-bottom: 0.1em;
-    display: inline-block;
-  }
-  .profile-wide-divider {
-    border: none;
-    border-top: 2px solid #e67e22;
-    margin: 0.7em 0 1.2em 0;
-    width: 60px;
-  }
-  .profile-wide-lead {
-    font-size: 1.18rem;
-    line-height: 2.1;
-    margin-bottom: 1.7em;
-    color: #333;
-  }
-  .profile-wide-info-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2.5em 3em;
-    margin-bottom: 1.7em;
-  }
-  .profile-wide-info-label {
-    font-size: 1.18em;
-    color: #e67e22;
-    font-weight: bold;
-    margin-bottom: 0.2em;
-    display: flex;
-    align-items: center;
-    gap: 0.3em;
-  }
-  .icon-large {
-    font-size: 1.7em;
-    line-height: 1.1;
-  }
-  .profile-wide-info-value {
-    font-size: 1.08em;
-    color: #222;
-  }
-  .profile-wide-section-block {
-    margin-bottom: 1.2em;
-  }
-  .profile-wide-section-title {
-    font-size: 1.18em;
-    font-weight: bold;
-    color: #e67e22;
-    margin-bottom: 0.3em;
-    letter-spacing: 0.04em;
-  }
-  .profile-wide-section-block ul {
-    margin: 0 0 0 1.2em;
-    padding: 0;
-    list-style: disc;
-    color: #333;
-    font-size: 1.08em;
-  }
-  .profile-wide-detail-btn-wrap {
-    margin-top: 2.5em;
-    text-align: right;
-  }
-  .profile-wide-detail-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.7em;
-    padding: 1.1em 2.6em;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #e67e22 60%, #ffd700 100%);
-    color: #fff;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 1.18rem;
-    box-shadow:
-      0 4px 16px rgba(230, 126, 34, 0.18),
-      0 1.5px 6px rgba(0, 0, 0, 0.1);
-    border: none;
-    transition:
-      background 0.2s,
-      transform 0.18s,
-      box-shadow 0.18s;
-    letter-spacing: 0.04em;
-    outline: none;
-  }
-  .profile-wide-detail-btn:hover,
-  .profile-wide-detail-btn:focus {
-    background: linear-gradient(90deg, #d35400 60%, #ffd700 100%);
-    transform: translateY(-3px) scale(1.06);
-    box-shadow:
-      0 8px 32px rgba(230, 126, 34, 0.22),
-      0 2px 12px rgba(0, 0, 0, 0.13);
-    color: #fff;
-  }
-  .profile-wide-detail-btn:active {
-    transform: scale(0.98);
-    box-shadow: 0 2px 6px rgba(230, 126, 34, 0.12);
-  }
-  .profile-wide-detail-btn-icon {
-    font-size: 1.3em;
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 0.2em;
-  }
-  @media (max-width: 900px) {
-    .profile-wide-inner {
-      flex-direction: column;
-      align-items: center;
-      gap: 2vw;
-      justify-content: center;
-    }
-    .profile-wide-photo {
-      margin-bottom: 1.5em;
-      flex: 0 0 auto;
-      margin-right: 0;
-    }
-    .profile-wide-bio {
-      margin-left: 0;
-      padding: 1.2em 1em 1em 1em;
-      max-width: 98vw;
-      flex: 1 1 100%;
-    }
-  }
-  @media (max-width: 600px) {
-    .profile-wide-photo img {
-      width: 120px;
-      height: 120px;
-    }
-    .profile-wide-bio {
-      padding: 0.7em 0.5em 0.5em 0.5em;
-    }
-    .profile-wide-title {
-      font-size: 1.2rem;
-    }
-  }
-</style>

@@ -3,9 +3,9 @@
 const { bookData = [] } = Astro.props;
 ---
 
-<div class="chart-card">
-  <h3 class="chart-name">読書ページ数の推移</h3>
-  <canvas id="readingChart" width="400" height="200"></canvas>
+<div class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden w-full min-w-0">
+  <h3 class="text-lg font-bold text-gray-800 m-0 mb-4 text-center">読書ページ数の推移</h3>
+  <canvas id="readingChart" width="400" height="200" class="w-full h-[200px] md:h-[250px]"></canvas>
 </div>
 
 <script is:inline define:vars={{ bookData }}>
@@ -67,8 +67,7 @@ const { bookData = [] } = Astro.props;
         const readingCard = readingCtx.closest(".chart-card");
         if (readingCard) {
           const messageDiv = document.createElement("div");
-          messageDiv.style.cssText =
-            "text-align: center; padding: 2rem; color: #6b7280; font-size: 1.1rem;";
+          messageDiv.className = "text-center py-8 text-gray-600 text-lg";
           messageDiv.textContent = "データがありません";
           readingCard.appendChild(messageDiv);
         }
@@ -88,46 +87,3 @@ const { bookData = [] } = Astro.props;
     initializeReadingChart();
   }
 </script>
-
-<style>
-  .chart-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-    overflow: hidden;
-    width: 100%;
-    min-width: 0;
-  }
-
-  .chart-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  }
-
-  .chart-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #374151;
-    margin: 0 0 1rem 0;
-    text-align: center;
-  }
-
-  .chart-card canvas {
-    width: 100% !important;
-    height: 200px !important;
-  }
-
-  @media (max-width: 768px) {
-    .chart-card {
-      padding: 1.5rem;
-    }
-
-    .chart-card canvas {
-      height: 250px !important;
-    }
-  }
-</style>

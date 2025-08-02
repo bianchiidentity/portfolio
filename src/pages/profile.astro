@@ -6,11 +6,9 @@ import History from "../components/History.astro";
 
 <Layout>
   <main
-    style="min-height: 60vh; display: flex; align-items: flex-start; justify-content: center; padding: 4vw 0 6vw 0; background: #fcfaf7;"
+    class="min-h-[60vh] flex items-start justify-center py-[4vw] pb-[6vw] bg-[#fcfaf7]"
   >
-    <div
-      style="width:100%; display:flex; flex-direction:column; align-items:center;"
-    >
+    <div class="w-full flex flex-col items-center">
       <DetailProfile />
       <History />
     </div>

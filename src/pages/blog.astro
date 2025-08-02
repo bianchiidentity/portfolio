@@ -5,37 +5,54 @@ const posts = await getCollection("blog");
 ---
 
 <Layout>
-  <main class="blog-container">
-    <div class="blog-header">
-      <h1 class="blog-title">ブログ</h1>
-      <p class="blog-subtitle">技術的な発見と学びの記録</p>
+  <main
+    class="min-h-screen bg-gradient-to-br from-orange-100 to-orange-200 p-8 md:p-4 relative overflow-x-hidden"
+  >
+    <div
+      class='absolute inset-0 bg-[url(&apos;data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>&apos;)] pointer-events-none'
+    >
+    </div>
+
+    <div class="text-center mb-12 relative z-1">
+      <h1
+        class="text-5xl md:text-6xl lg:text-7xl font-extrabold bg-gradient-to-r from-amber-800 to-orange-600 bg-clip-text text-transparent mb-2 drop-shadow-sm animate-fadeInUp"
+      >
+        ブログ
+      </h1>
+      <p
+        class="text-lg text-gray-700 font-medium m-0 animate-fadeInUp animation-delay-200"
+      >
+        技術的な発見と学びの記録
+      </p>
     </div>
 
     {
       posts.length === 0 ? (
-        <div class="empty-state">
-          <div class="empty-icon">📝</div>
-          <p>記事はまだありません。</p>
-          <p class="empty-subtitle">新しい記事を書く準備をしています...</p>
+        <div class="text-center py-16 relative z-1 animate-bounce">
+          <div class="text-6xl mb-4">📝</div>
+          <p class="text-xl text-gray-700 mb-2">記事はまだありません。</p>
+          <p class="text-gray-600">新しい記事を書く準備をしています...</p>
         </div>
       ) : (
-        <div class="posts-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto relative z-1">
           {posts.map((post, index) => {
             return (
               <article
-                class="post-card"
+                class="bg-white/90 rounded-2xl shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl overflow-hidden animate-fadeInUp"
                 style={`animation-delay: ${index * 0.1}s`}
               >
                 <a
                   href={`/blog/${post.slug}`}
-                  class="post-link"
+                  class="block p-6 no-underline text-inherit hover:no-underline hover:text-inherit"
                   aria-label={post.data.title + " の詳細ページへ"}
                 >
-                  <div class="post-header">
-                    <h2 class="post-title">{post.data.title}</h2>
-                    <div class="post-meta">
+                  <div class="mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 mb-3 leading-tight">
+                      {post.data.title}
+                    </h2>
+                    <div class="flex items-center gap-3 text-sm">
                       <time
-                        class="post-date"
+                        class="text-gray-500 font-medium"
                         datetime={post.data.date?.toISOString()}
                       >
                         {post.data.date?.toLocaleDateString("ja-JP", {
@@ -44,12 +61,18 @@ const posts = await getCollection("blog");
                           day: "numeric",
                         })}
                       </time>
-                      <span class="read-time">📖 5分読了</span>
+                      <span class="text-orange-700 text-sm bg-orange-100 px-2 py-1 rounded-full">
+                        📖 5分読了
+                      </span>
                     </div>
                   </div>
-                  <div class="post-excerpt">{post.data.summary}</div>
-                  <div class="post-footer">
-                    <span class="read-more">続きを読む →</span>
+                  <div class="text-gray-700 text-base leading-relaxed mb-6">
+                    {post.data.summary}
+                  </div>
+                  <div class="flex justify-end">
+                    <span class="text-orange-600 font-semibold text-sm transition-all duration-300 group-hover:text-orange-700 group-hover:translate-x-1">
+                      続きを読む →
+                    </span>
                   </div>
                 </a>
               </article>
@@ -62,236 +85,77 @@ const posts = await getCollection("blog");
 </Layout>
 
 <style>
-  .blog-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-    padding: 2rem 1rem;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  .blog-container::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-    pointer-events: none;
-  }
-
-  .blog-header {
-    text-align: center;
-    margin-bottom: 3rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .blog-title {
-    font-size: 3.5rem;
-    font-weight: 800;
-    background: linear-gradient(45deg, #8b4513, #d2691e);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    animation: fadeInUp 0.8s ease-out;
-  }
-
-  .blog-subtitle {
-    font-size: 1.2rem;
-    color: rgba(139, 69, 19, 0.8);
-    font-weight: 300;
-    margin: 0;
-    animation: fadeInUp 0.8s ease-out 0.2s both;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(210, 105, 30, 0.2);
-    animation: fadeInUp 0.8s ease-out;
-  }
-
-  .empty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    animation: bounce 2s infinite;
-  }
-
-  .empty-state p {
-    color: #8b4513;
-    font-size: 1.2rem;
-    margin: 0.5rem 0;
-  }
-
-  .empty-subtitle {
-    opacity: 0.8;
-    font-size: 1rem !important;
-  }
-
-  .posts-grid {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .post-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeInUp 0.8s ease-out both;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .post-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  }
-
-  .post-link {
-    display: block;
-    text-decoration: none;
-    color: inherit;
-    padding: 2rem;
-    height: 100%;
-    transition: all 0.3s ease;
-  }
-
-  .post-link:hover {
-    text-decoration: none;
-  }
-
-  .post-header {
-    margin-bottom: 1.5rem;
-  }
-
-  .post-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0 0 1rem 0;
-    line-height: 1.3;
-    background: linear-gradient(45deg, #d2691e, #cd853f);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .post-meta {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .post-date {
-    color: #7f8c8d;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-
-  .read-time {
-    color: #8b4513;
-    font-size: 0.85rem;
-    background: rgba(210, 105, 30, 0.1);
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
-  }
-
-  .post-excerpt {
-    color: #34495e;
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-  }
-
-  .post-footer {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .read-more {
-    color: #d2691e;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-  }
-
-  .post-card:hover .read-more {
-    color: #cd853f;
-    transform: translateX(4px);
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes bounce {
-    0%,
-    20%,
-    50%,
-    80%,
-    100% {
-      transform: translateY(0);
-    }
-    40% {
-      transform: translateY(-10px);
-    }
-    60% {
-      transform: translateY(-5px);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .blog-title {
-      font-size: 2.5rem;
+  @layer components {
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .posts-grid {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
+    .animate-fadeInUp {
+      animation: fadeInUp 0.8s ease-out;
     }
 
-    .post-card {
-      margin: 0 1rem;
+    .animation-delay-200 {
+      animation-delay: 0.2s;
     }
 
-    .post-link {
-      padding: 1.5rem;
+    @keyframes bounce {
+      0%,
+      20%,
+      50%,
+      80%,
+      100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-10px);
+      }
+      60% {
+        transform: translateY(-5px);
+      }
     }
-  }
 
-  @media (max-width: 480px) {
-    .blog-container {
-      padding: 1rem 0.5rem;
+    .animate-bounce {
+      animation: bounce 2s infinite;
     }
 
-    .blog-title {
-      font-size: 2rem;
+    @media (max-width: 768px) {
+      .blog-title {
+        font-size: 2.5rem;
+      }
+
+      .posts-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .post-card {
+        margin: 0 1rem;
+      }
+
+      .post-link {
+        padding: 1.5rem;
+      }
     }
 
-    .post-title {
-      font-size: 1.3rem;
+    @media (max-width: 480px) {
+      .blog-container {
+        padding: 1rem 0.5rem;
+      }
+
+      .blog-title {
+        font-size: 2rem;
+      }
+
+      .post-title {
+        font-size: 1.3rem;
+      }
     }
   }
 </style>

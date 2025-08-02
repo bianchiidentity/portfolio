@@ -2,14 +2,16 @@
 // ヒーローセクションのコンポーネント化
 type Props = {
   images?: string[];
-}
+};
 
 const { images = ["/mv.jpg", "/mv3.png"] } = Astro.props;
 ---
 
-<main class="hero-curve">
+<main
+  class="relative h-[calc(100dvh-10vh)] w-screen min-w-0 bg-white box-border"
+>
   <svg
-    class="curved-shape"
+    class="block absolute top-0 left-0 w-full h-full z-2"
     viewBox="0 0 900 600"
     preserveAspectRatio="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -24,123 +26,69 @@ const { images = ["/mv.jpg", "/mv3.png"] } = Astro.props;
       fill="#e67e22"
       fill-rule="evenodd"></path>
   </svg>
-  <div class="hero-image-slider">
-    {images.map((image, index) => (
-      <img 
-        class={`hero-bg-image ${index === 0 ? 'active' : ''}`} 
-        src={image} 
-        alt={`自画像${index + 1}`} 
-      />
-    ))}
+  <div
+    class="absolute top-0 left-[calc(205/900*100vw)] w-[calc(100vw-(205/900*100vw))] h-full overflow-hidden z-1"
+  >
+    {
+      images.map((image, index) => (
+        <img
+          class={`absolute top-0 left-0 w-full h-full object-cover object-left-center transition-opacity duration-1000 z-1 pointer-events-none ${index === 0 ? "opacity-100" : "opacity-0"}`}
+          src={image}
+          alt={`自画像${index + 1}`}
+        />
+      ))
+    }
   </div>
-  <div class="hero-text">
-    <div class="hero-label">Webエンジニア</div>
-    <div class="hero-furigana">かわさき こうじ</div>
-    <h1 class="hero-name">川崎浩史</h1>
-    <div class="hero-catch">
+  <div
+    class="absolute left-0 top-0 h-full w-[50vw] min-w-[320px] flex flex-col justify-start items-start pl-[4vw] pt-[28vh] z-3 text-white text-left drop-shadow-lg"
+  >
+    <div class="text-[2vw] text-yellow-400 font-bold mb-[1.2em] drop-shadow-lg">
+      Webエンジニア
+    </div>
+    <div
+      class="text-[1.5vw] text-white mb-[0.2em] tracking-wider drop-shadow-lg"
+    >
+      かわさき こうじ
+    </div>
+    <h1
+      class="text-[7vw] font-black m-0 mb-[0.5em] tracking-wide text-white drop-shadow-lg"
+    >
+      川崎浩史
+    </h1>
+    <div class="text-[2vw] mb-[2em] text-white drop-shadow-lg">
       技術で人を幸せに。<br />UI/UX・フロントエンド・クラウドが得意です。
     </div>
   </div>
-  <style>
-    .hero-curve {
-      position: relative;
-      height: calc(100dvh - 10vh);
-      width: 100vw;
-      min-width: 0;
-      background: #fff;
-      box-sizing: border-box;
-    }
-    .curved-shape {
-      display: block;
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
-    }
-    .hero-image-slider {
-      position: absolute;
-      top: 0;
-      left: calc(205 / 900 * 100vw);
-      width: calc(100vw - (205 / 900 * 100vw));
-      height: 100%;
-      overflow: hidden;
-      z-index: 1;
-    }
-    .hero-bg-image {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: left center;
-      opacity: 0;
-      transition: opacity 1s;
-      z-index: 1;
-      pointer-events: none;
-    }
-    .hero-bg-image.active {
-      opacity: 1;
-      z-index: 1;
-    }
-    .hero-text {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      width: 50vw;
-      min-width: 320px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: flex-start;
-      padding-left: 4vw;
-      padding-top: 28vh;
-      z-index: 3;
-      color: #fff;
-      text-shadow:
-        0 4px 24px #e67e22,
-        0 2px 8px rgba(0, 0, 0, 0.25);
-      text-align: left;
-    }
-    .hero-label {
-      font-size: 2vw;
-      color: #ffd700;
-      font-weight: bold;
-      margin-bottom: 1.2em;
-      text-shadow:
-        0 2px 8px #e67e22,
-        0 2px 8px rgba(0, 0, 0, 0.18);
-    }
-    .hero-furigana {
-      font-size: 1.5vw;
-      color: #fff;
-      margin-bottom: 0.2em;
-      letter-spacing: 0.1em;
-      text-shadow:
-        0 2px 8px #e67e22,
-        0 2px 8px rgba(0, 0, 0, 0.18);
-    }
-    .hero-name {
-      font-size: 7vw;
-      font-weight: 900;
-      margin: 0 0 0.5em 0;
-      letter-spacing: 0.05em;
-      color: #fff;
-      text-shadow:
-        0 4px 24px #e67e22,
-        0 2px 8px rgba(0, 0, 0, 0.25);
-    }
-    .hero-catch {
-      font-size: 2vw;
-      margin-bottom: 2em;
-      color: #fff;
-      text-shadow:
-        0 4px 24px #e67e22,
-        0 2px 8px rgba(0, 0, 0, 0.25);
-    }
+</main>
+
+<script>
+  type ImageSlider = {
+    idx: number;
+    images: NodeListOf<Element>;
+    interval: number;
+  };
+
+  const slider: ImageSlider = {
+    idx: 0,
+    images:
+      typeof window !== "undefined"
+        ? document.querySelectorAll(".hero-bg-image")
+        : ([] as unknown as NodeListOf<Element>),
+    interval: 4000,
+  };
+
+  if (slider.images.length > 1) {
+    setInterval((): void => {
+      slider.images.forEach((img, i) =>
+        img.classList.toggle("active", i === slider.idx)
+      );
+      slider.idx = (slider.idx + 1) % slider.images.length;
+    }, slider.interval);
+  }
+</script>
+
+<style>
+  @layer components {
     @media (max-width: 900px) {
       .hero-text {
         width: 100vw;
@@ -161,29 +109,5 @@ const { images = ["/mv.jpg", "/mv3.png"] } = Astro.props;
         font-size: 1rem;
       }
     }
-  </style>
-  <script>
-    type ImageSlider = {
-      idx: number;
-      images: NodeListOf<Element>;
-      interval: number;
-    }
-
-    const slider: ImageSlider = {
-      idx: 0,
-      images: typeof window !== "undefined" 
-        ? document.querySelectorAll(".hero-bg-image") 
-        : ([] as unknown as NodeListOf<Element>),
-      interval: 4000
-    };
-
-    if (slider.images.length > 1) {
-      setInterval((): void => {
-        slider.images.forEach((img, i) => 
-          img.classList.toggle("active", i === slider.idx)
-        );
-        slider.idx = (slider.idx + 1) % slider.images.length;
-      }, slider.interval);
-    }
-  </script>
-</main>
+  }
+</style>

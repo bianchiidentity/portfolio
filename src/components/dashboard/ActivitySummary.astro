@@ -33,23 +33,39 @@ exerciseData.forEach((item) => {
 });
 ---
 
-<section class="summary-section">
-  <h2 class="summary-title">🏆 活動サマリー</h2>
-  <div class="summary-grid">
-    <div class="summary-card exercise-summary">
-      <div class="summary-icon">💪</div>
-      <div class="summary-content">
-        <h3 class="summary-name">筋トレ</h3>
-        <div class="summary-stats">
-          <div class="summary-stat">
-            <span class="stat-label">ジムに行った回数</span>
-            <span class="stat-value">{gymVisitCount}回</span>
+<section
+  class="m-0 relative z-1 animate-fadeInUp animation-delay-300 block visible opacity-100 w-full box-border"
+>
+  <h2 class="text-2xl font-bold text-white mb-4 text-center drop-shadow-lg">
+    🏆 活動サマリー
+  </h2>
+  <div class="grid grid-cols-1 gap-3">
+    <div
+      class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 flex items-center gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+    >
+      <div
+        class="text-3xl w-12 h-12 flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl text-white flex-shrink-0"
+      >
+        💪
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-bold text-gray-800 m-0 mb-2">筋トレ</h3>
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600 font-medium"
+              >ジムに行った回数</span
+            >
+            <span class="text-base text-gray-800 font-semibold"
+              >{gymVisitCount}回</span
+            >
           </div>
           {
             Object.entries(exerciseMaxRecords).map(([exerciseName, record]) => (
-              <div class="summary-stat">
-                <span class="stat-label">{exerciseName}</span>
-                <span class="stat-value">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600 font-medium">
+                  {exerciseName}
+                </span>
+                <span class="text-base text-gray-800 font-semibold">
                   最大{(record as any).maxWeight}kg / 総
                   {exerciseTotalCounts[exerciseName] || 0}回
                 </span>
@@ -60,22 +76,32 @@ exerciseData.forEach((item) => {
       </div>
     </div>
 
-    <div class="summary-card book-summary">
-      <div class="summary-icon">📚</div>
-      <div class="summary-content">
-        <h3 class="summary-name">読書</h3>
-        <div class="summary-stats">
-          <div class="summary-stat">
-            <span class="stat-label">合計日数</span>
-            <span class="stat-value">{bookData.length}日</span>
+    <div
+      class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 flex items-center gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+    >
+      <div
+        class="text-3xl w-12 h-12 flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl text-white flex-shrink-0"
+      >
+        📚
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-bold text-gray-800 m-0 mb-2">読書</h3>
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600 font-medium">合計日数</span>
+            <span class="text-base text-gray-800 font-semibold"
+              >{bookData.length}日</span
+            >
           </div>
-          <div class="summary-stat">
-            <span class="stat-label">合計冊数</span>
-            <span class="stat-value">{Object.keys(bookStats).length}冊</span>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600 font-medium">合計冊数</span>
+            <span class="text-base text-gray-800 font-semibold"
+              >{Object.keys(bookStats).length}冊</span
+            >
           </div>
-          <div class="summary-stat">
-            <span class="stat-label">総ページ</span>
-            <span class="stat-value"
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600 font-medium">総ページ</span>
+            <span class="text-base text-gray-800 font-semibold"
               >{
                 bookData.reduce(
                   (sum, item) => sum + ((item as any).pages_read || 0),
@@ -88,23 +114,32 @@ exerciseData.forEach((item) => {
       </div>
     </div>
 
-    <div class="summary-card output-summary">
-      <div class="summary-icon">✍️</div>
-      <div class="summary-content">
-        <h3 class="summary-name">アウトプット</h3>
-        <div class="summary-stats">
-          <div class="summary-stat">
-            <span class="stat-label">合計日数</span>
-            <span class="stat-value">{outputData.length}日</span>
-          </div>
-          <div class="summary-stat">
-            <span class="stat-label">合計記事数</span>
-            <span class="stat-value">{Object.keys(outputStats).length}記事</span
+    <div
+      class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 flex items-center gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+    >
+      <div
+        class="text-3xl w-12 h-12 flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl text-white flex-shrink-0"
+      >
+        ✍️
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-bold text-gray-800 m-0 mb-2">アウトプット</h3>
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600 font-medium">合計日数</span>
+            <span class="text-base text-gray-800 font-semibold"
+              >{outputData.length}日</span
             >
           </div>
-          <div class="summary-stat">
-            <span class="stat-label">総文字数</span>
-            <span class="stat-value"
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600 font-medium">合計記事数</span>
+            <span class="text-base text-gray-800 font-semibold"
+              >{Object.keys(outputStats).length}記事</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600 font-medium">総文字数</span>
+            <span class="text-base text-gray-800 font-semibold"
               >{
                 outputData.reduce(
                   (sum, item) => sum + ((item as any).chars || 0),
@@ -120,137 +155,53 @@ exerciseData.forEach((item) => {
 </section>
 
 <style>
-  /* まとめセクション */
-  .summary-section {
-    margin: 0;
-    position: relative;
-    z-index: 1;
-    animation: fadeInUp 0.8s ease-out 0.3s both;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .summary-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 1rem;
-    text-align: center;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  }
-
-  .summary-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .summary-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    transition: all 0.3s ease;
-  }
-
-  .summary-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  }
-
-  .summary-icon {
-    font-size: 2rem;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    border-radius: 20px;
-    color: white;
-    flex-shrink: 0;
-  }
-
-  .summary-content {
-    flex: 1;
-  }
-
-  .summary-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #374151;
-    margin: 0 0 0.5rem 0;
-  }
-
-  .summary-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-  }
-
-  .summary-stat {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .stat-label {
-    font-size: 0.9rem;
-    color: #6b7280;
-    font-weight: 500;
-  }
-
-  .stat-value {
-    font-size: 1rem;
-    color: #374151;
-    font-weight: 600;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .summary-grid {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
+  @layer components {
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .summary-card {
-      padding: 1.5rem;
+    .animate-fadeInUp {
+      animation: fadeInUp 0.8s ease-out;
     }
 
-    .summary-icon {
-      width: 60px;
-      height: 60px;
-      font-size: 2rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .summary-card {
-      flex-direction: column;
-      text-align: center;
-      padding: 1.5rem;
+    .animation-delay-300 {
+      animation-delay: 0.3s;
     }
 
-    .summary-stats {
-      width: 100%;
+    @media (max-width: 768px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .summary-card {
+        padding: 1.5rem;
+      }
+
+      .summary-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .summary-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+      }
+
+      .summary-stats {
+        width: 100%;
+      }
     }
   }
 </style>

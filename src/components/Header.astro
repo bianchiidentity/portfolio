@@ -7,274 +7,164 @@ type Props = {
 const { currentPage } = Astro.props;
 ---
 
-<header class="header">
-  <div class="header-content">
-    <div class="header-left">
-      <a href="/" class="name-link">
-        <h1 class="name brush-name">川﨑浩史</h1>
+<header
+  class="bg-gradient-to-r from-amber-50/60 to-orange-200/100 w-full fixed top-0 left-0 z-50 mt-0 border-b-2 border-gray-300 shadow-lg h-[10vh] min-h-[70px]"
+>
+  <div
+    class="flex items-center justify-between px-[5vw] w-full m-0 box-border bg-amber-50/95 h-full"
+  >
+    <div class="flex flex-row items-center gap-[0.7vw] z-10 relative ml-0">
+      <a
+        href="/"
+        class="no-underline text-inherit transition-all duration-200 ease-in-out hover:no-underline hover:text-inherit"
+      >
+        <h1
+          class="text-4xl md:text-5xl lg:text-6xl text-gray-800 m-0 leading-tight tracking-wide relative z-2 font-sans hover:text-orange-500 hover:drop-shadow-lg"
+        >
+          川﨑浩史
+        </h1>
       </a>
-      <span class="job-title">Webエンジニア</span>
+      <span
+        class="text-sm md:text-base text-gray-600 ml-[0.7vw] font-bold whitespace-nowrap inline-block align-bottom font-sans"
+        >Webエンジニア</span
+      >
     </div>
-    <nav class="header-nav">
-      <ul class="nav-list">
+
+    <!-- デスクトップナビゲーション -->
+    <nav
+      class="hidden md:flex items-center mr-0 pr-0 relative right-0 max-w-[60vw] justify-end"
+    >
+      <ul
+        class="flex items-center list-none m-0 p-0 gap-9 max-w-full overflow-x-auto box-border justify-end"
+      >
         <li>
           <a
             href="/"
-            class={`nav-link ${currentPage === "home" ? "active" : ""}`}>Home</a
+            class={`text-orange-500 no-underline text-xl font-black tracking-wide transition-colors duration-200 font-sans hover:text-orange-700 ${currentPage === "home" ? "text-orange-700" : ""}`}
+            >Home</a
           >
         </li>
         <li>
           <a
             href="/profile"
-            class={`nav-link ${currentPage === "profile" ? "active" : ""}`}
+            class={`text-orange-500 no-underline text-xl font-black tracking-wide transition-colors duration-200 font-sans hover:text-orange-700 ${currentPage === "profile" ? "text-orange-700" : ""}`}
             >プロフィール</a
           >
         </li>
         <li>
           <a
             href="/dashboard"
-            class={`nav-link ${currentPage === "dashboard" ? "active" : ""}`}
+            class={`text-orange-500 no-underline text-xl font-black tracking-wide transition-colors duration-200 font-sans hover:text-orange-700 ${currentPage === "dashboard" ? "text-orange-700" : ""}`}
             >ダッシュボード</a
           >
         </li>
         <li>
           <a
             href="/blog"
-            class={`nav-link ${currentPage === "blog" ? "active" : ""}`}>blog</a
+            class={`text-orange-500 no-underline text-xl font-black tracking-wide transition-colors duration-200 font-sans hover:text-orange-700 ${currentPage === "blog" ? "text-orange-700" : ""}`}
+            >blog</a
           >
         </li>
       </ul>
     </nav>
-    <button class="hamburger" id="hamburger" aria-label="メニュー">
-      <span></span>
-      <span></span>
-      <span></span>
+
+    <!-- モバイルハンバーガーボタン -->
+    <button
+      class="md:hidden flex flex-col bg-none border-none cursor-pointer p-0 w-9 h-9 justify-around relative z-10 hamburger"
+      id="hamburger"
+      aria-label="メニュー"
+    >
+      <span
+        class="w-full h-1 bg-orange-500 transition-all duration-300 ease-in-out rounded-sm"
+      ></span>
+      <span
+        class="w-full h-1 bg-orange-500 transition-all duration-300 ease-in-out rounded-sm"
+      ></span>
+      <span
+        class="w-full h-1 bg-orange-500 transition-all duration-300 ease-in-out rounded-sm"
+      ></span>
     </button>
   </div>
+
+  <!-- モバイルナビゲーション -->
+  <nav
+    class="md:hidden fixed top-0 left-[-100%] w-full h-screen bg-amber-50/95 flex flex-col justify-start items-center transition-left duration-300 ease-in-out pt-20 box-border header-nav"
+    id="mobile-nav"
+  >
+    <ul
+      class="flex flex-col gap-0 items-stretch w-full max-w-md mt-10 nav-list"
+    >
+      <li class="border-b border-gray-300 w-full">
+        <a
+          href="/"
+          class="text-lg py-4 text-orange-500 no-underline font-medium block w-full text-center transition-colors duration-200 hover:text-orange-700"
+          >Home</a
+        >
+      </li>
+      <li class="border-b border-gray-300 w-full">
+        <a
+          href="/profile"
+          class="text-lg py-4 text-orange-500 no-underline font-medium block w-full text-center transition-colors duration-200 hover:text-orange-700"
+          >プロフィール</a
+        >
+      </li>
+      <li class="border-b border-gray-300 w-full">
+        <a
+          href="/dashboard"
+          class="text-lg py-4 text-orange-500 no-underline font-medium block w-full text-center transition-colors duration-200 hover:text-orange-700"
+          >ダッシュボード</a
+        >
+      </li>
+      <li class="w-full">
+        <a
+          href="/blog"
+          class="text-lg py-4 text-orange-500 no-underline font-medium block w-full text-center transition-colors duration-200 hover:text-orange-700"
+          >blog</a
+        >
+      </li>
+    </ul>
+  </nav>
 </header>
 
 <script>
   type HamburgerElements = {
     hamburger: HTMLElement | null;
-    nav: Element | null;
+    mobileNav: HTMLElement | null;
   };
 
   const elements: HamburgerElements = {
     hamburger: document.getElementById("hamburger"),
-    nav: document.querySelector(".header-nav"),
+    mobileNav: document.getElementById("mobile-nav"),
   };
 
   elements.hamburger?.addEventListener("click", (): void => {
     elements.hamburger?.classList.toggle("active");
-    elements.nav?.classList.toggle("active");
+    elements.mobileNav?.classList.toggle("active");
   });
 </script>
 
 <style>
-  .header {
-    background: linear-gradient(90deg, #f8f5f0 60%, #ffe4b5 100%);
-    width: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    margin-top: 0;
-    border-bottom: 2px solid #d0d0d0;
-    box-shadow: 0 4px 16px rgba(230, 103, 34, 0.08);
-    height: 10vh;
-    min-height: 70px;
-  }
-  .header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 5vw;
-    width: 100%;
-    margin: 0;
-    box-sizing: border-box;
-    background: #fcfaf6;
-    height: 100%;
-  }
-  .header-left {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.7vw;
-    z-index: 101;
-    position: relative;
-    margin-left: 0;
-  }
-  .name {
-    font-size: 2.8rem;
-    color: #222;
-    margin: 0;
-    line-height: 1.1;
-    letter-spacing: 0.04em;
-    position: relative;
-    z-index: 2;
-    font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
-  }
-  .brush-name {
-    font-size: 3.2rem;
-    font-family: inherit;
-    letter-spacing: 0.04em;
-    color: #222;
-    text-shadow: none;
-  }
-  .brush-name:hover {
-    color: #e67e22;
-    text-shadow:
-      0 0 16px #ffd9a0,
-      0 2px 0 #fff7e6;
-  }
-  .header-nav {
-    display: flex;
-    align-items: center;
-    margin-right: 0;
-    padding-right: 0;
-    position: relative;
-    right: 0;
-    max-width: 60vw;
-    justify-content: flex-end;
-  }
-  .nav-list {
-    display: flex;
-    align-items: center;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    gap: 3.5rem;
-    max-width: 100%;
-    overflow-x: auto;
-    box-sizing: border-box;
-    justify-content: flex-end;
-  }
-  .nav-link {
-    color: #e67e22;
-    text-decoration: none;
-    font-size: 1.7rem;
-    font-weight: 900;
-    letter-spacing: 0.04em;
-    transition: color 0.2s;
-    font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
-  }
-  .nav-link:hover {
-    color: #d35400;
-  }
-  .name-link {
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.2s ease;
-  }
-
-  .name-link:hover {
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .job-title {
-    font-size: 1.15rem;
-    color: #444;
-    margin-left: 0.7vw;
-    font-weight: 700;
-    white-space: nowrap;
-    display: inline-block;
-    vertical-align: bottom;
-    font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
-  }
-
-  /* ハンバーガーメニュー */
-  .hamburger {
-    display: none;
-    flex-direction: column;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    width: 35px;
-    height: 35px;
-    justify-content: space-around;
-    position: relative;
-    z-index: 10;
-  }
-
-  .hamburger span {
-    width: 100%;
-    height: 4px;
-    background-color: #e67e22;
-    transition: all 0.3s ease;
-    border-radius: 2px;
-  }
-
-  .hamburger.active span:nth-child(1) {
-    transform: rotate(45deg) translate(8px, 8px);
-  }
-
-  .hamburger.active span:nth-child(2) {
-    opacity: 0;
-  }
-
-  .hamburger.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(8px, -8px);
-  }
-
-  @media (max-width: 768px) {
-    .hamburger {
-      display: flex;
+  @layer components {
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(8px, 8px);
     }
 
-    .header-content {
-      padding: 0.6rem 2rem 0.6rem 2rem;
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
     }
 
-    .header-nav {
-      position: fixed;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100vh;
-      background-color: #f8f5f0;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      transition: left 0.3s ease;
-      padding: 2rem 0 0 0;
-      box-sizing: border-box;
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(8px, -8px);
     }
 
     .header-nav.active {
       left: 0;
     }
 
-    .nav-list {
-      flex-direction: column;
-      gap: 0;
-      align-items: stretch;
-      width: 100%;
-      max-width: 40;
-      margin-top: 4rem;
-    }
-
-    .nav-list li {
-      border-bottom: 1px solid #e0e0e0;
-      width: 100%;
-    }
-    .nav-list li:last-child {
-      border-bottom: none;
-    }
-
-    .nav-link {
-      font-size: 1.7rem;
-      padding: 1.2rem 0;
-      color: #e67e22;
-      text-decoration: none;
-      font-weight: 500;
-      display: block;
-      width: 100%;
-      text-align: center;
-    }
-    .brush-name {
-      font-size: 1.2rem;
+    @media (max-width: 480px) {
+      .nav-list a {
+        font-size: 16px;
+      }
     }
   }
 </style>

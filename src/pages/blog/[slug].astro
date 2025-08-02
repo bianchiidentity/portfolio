@@ -32,47 +32,84 @@ const toc = headings
 ---
 
 <Layout>
-  <main class="blog-post">
-    <div class="container">
+  <main class="min-h-screen bg-white">
+    <div class="flex flex-col lg:flex-row max-w-7xl mx-auto">
       <!-- 左側の目次 -->
-      <aside class="toc">
-        <div class="toc-header">
-          <h3>目次</h3>
+      <aside
+        class="w-full lg:w-80 lg:min-h-screen lg:sticky lg:top-0 bg-gray-50 border-r border-gray-200 p-6"
+      >
+        <div class="mb-4">
+          <h3 class="text-lg font-bold text-gray-800">目次</h3>
         </div>
-        <nav class="toc-nav">
-          <ul>
-            <li><a href="#title">ページ先頭</a></li>
-            <li><a href="#overview">概要</a></li>
+        <nav>
+          <ul class="space-y-1">
+            <li>
+              <a
+                href="#title"
+                class="block p-2 text-gray-700 no-underline rounded transition-all duration-200 hover:bg-gray-200 hover:text-blue-600 text-sm"
+                >ページ先頭</a
+              >
+            </li>
+            <li>
+              <a
+                href="#overview"
+                class="block p-2 text-gray-700 no-underline rounded transition-all duration-200 hover:bg-gray-200 hover:text-blue-600 text-sm"
+                >概要</a
+              >
+            </li>
             {
               toc.map((heading) => (
-                <li class={`toc-item toc-depth-${heading.depth}`}>
-                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                <li class={`${heading.depth === 3 ? "ml-4" : ""}`}>
+                  <a
+                    href={`#${heading.slug}`}
+                    class={`block p-2 text-gray-700 no-underline rounded transition-all duration-200 hover:bg-gray-200 hover:text-blue-600 ${heading.depth === 3 ? "text-sm text-gray-600" : "text-sm"}`}
+                  >
+                    {heading.text}
+                  </a>
                 </li>
               ))
             }
-            <li class="toc-separator"></li>
-            <li><a href="/blog" class="toc-blog-link">← ブログ一覧</a></li>
+            <li class="h-px bg-gray-200 my-4"></li>
+            <li>
+              <a
+                href="/blog"
+                class="block p-4 text-blue-600 font-bold text-lg border-t-2 border-blue-600 mt-6 bg-blue-50 rounded-lg text-center no-underline transition-all duration-200 hover:bg-blue-600 hover:text-white hover:-translate-y-0.5 hover:shadow-md"
+              >
+                ← ブログ一覧
+              </a>
+            </li>
           </ul>
         </nav>
       </aside>
 
       <!-- 右側のコンテンツ -->
-      <article class="content">
-        <div class="prose">
-          <div class="title" id="title">
-            <div class="date">
+      <article
+        class="flex-1 p-8 lg:p-12 max-w-full lg:max-w-[calc(100%-320px)]"
+      >
+        <div class="max-w-full m-0 p-0">
+          <div class="mb-8 pb-4 border-b border-gray-200" id="title">
+            <div class="mb-2 text-gray-600 text-sm">
               <FormattedDate date={postData?.data?.date} />
             </div>
-            <h1>{postData?.data?.title}</h1>
-            <hr />
+            <h1
+              class="m-0 mb-2 text-4xl font-semibold text-gray-800 leading-tight"
+            >
+              {postData?.data?.title}
+            </h1>
+            <hr class="border-gray-200" />
           </div>
 
-          <div class="overview" id="overview">
-            <h2>概要</h2>
-            <p>{postData?.data?.summary}</p>
+          <div
+            class="my-8 p-4 bg-gray-50 border-l-4 border-blue-600 rounded"
+            id="overview"
+          >
+            <h2 class="m-0 mb-2 text-xl text-gray-800">概要</h2>
+            <p class="m-0 text-gray-600 leading-relaxed">
+              {postData?.data?.summary}
+            </p>
           </div>
 
-          <div class="main-content" id="content">
+          <div class="mt-8" id="content">
             <Content />
           </div>
         </div>
@@ -83,7 +120,7 @@ const toc = headings
 
 <script>
   // スムーズスクロール
-  document.querySelectorAll(".toc-nav a").forEach((link) => {
+  document.querySelectorAll("nav a").forEach((link) => {
     link.addEventListener("click", (e) => {
       const href = link.getAttribute("href");
 
@@ -98,370 +135,198 @@ const toc = headings
       const targetElement = document.getElementById(targetId);
       if (targetElement) {
         // ヘッダーの高さを考慮してスクロール位置を調整
-        const headerHeight = 80; // ヘッダーの高さを推定
-        const targetPosition = targetElement.offsetTop - headerHeight;
+        const headerHeight = 80; // ヘッダーの高さを調整
+        const targetPosition = targetElement.offsetTop - headerHeight - 20;
 
         window.scrollTo({
           top: targetPosition,
           behavior: "smooth",
         });
-
-        // アクティブな目次アイテムをハイライト
-        document
-          .querySelectorAll(".toc-nav a")
-          .forEach((a) => a.classList.remove("active"));
-        link.classList.add("active");
       }
     });
   });
 
-  // スクロール時に現在のセクションをハイライト
-  window.addEventListener("scroll", () => {
-    const headings = document.querySelectorAll("h2, h3");
-    const headerHeight = 80;
-    let currentHeading = null;
+  // スクロール位置に基づいてアクティブな目次アイテムを更新
+  function updateActiveTocItem() {
+    const headings = document.querySelectorAll("h1, h2, h3");
+    const tocLinks = document.querySelectorAll("nav a[href^='#']");
+
+    let currentHeading: Element | null = null;
 
     headings.forEach((heading) => {
       const rect = heading.getBoundingClientRect();
-      // ヘッダーの高さを考慮して判定
-      if (rect.top <= headerHeight + 20) {
+      if (rect.top <= 100) {
         currentHeading = heading;
       }
     });
 
+    tocLinks.forEach((link) => {
+      link.classList.remove("bg-blue-600", "text-white", "font-medium");
+      link.classList.add("text-gray-700");
+    });
+
     if (currentHeading) {
-      document
-        .querySelectorAll(".toc-nav a")
-        .forEach((a) => a.classList.remove("active"));
-      const activeLink = document.querySelector(
-        `.toc-nav a[href="#${(currentHeading as HTMLElement).id}"]`
-      );
-      if (activeLink) {
-        activeLink.classList.add("active");
+      const headingElement = currentHeading as HTMLElement;
+      if (headingElement.id) {
+        const activeLink = document.querySelector(
+          `nav a[href="#${headingElement.id}"]`
+        );
+        if (activeLink) {
+          activeLink.classList.remove("text-gray-700");
+          activeLink.classList.add("bg-blue-600", "text-white", "font-medium");
+        }
       }
     }
-  });
+  }
+
+  // スクロールイベントリスナーを追加
+  window.addEventListener("scroll", updateActiveTocItem);
+
+  // 初期化時にアクティブなアイテムを設定
+  updateActiveTocItem();
 </script>
 
 <style>
-  .blog-post {
-    min-height: 100vh;
-    background: #f6f6f6;
-    padding: 0;
-    position: relative;
-    scroll-padding-top: 80px; /* ヘッダーの高さ分のパディング */
-  }
-
-  .container {
-    display: flex;
-    max-width: 1400px;
-    margin: 0 auto;
-    background: white;
-    min-height: 100vh;
-  }
-
-  /* 左側の目次 */
-  .toc {
-    width: 280px;
-    background: #f8f9fa;
-    border-right: 1px solid #e1e4e8;
-    padding: 1rem;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-    transition: all 0.3s ease;
-  }
-
-  .toc-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e1e4e8;
-  }
-
-  .toc-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #24292e;
-  }
-
-  .toc-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .toc-nav li {
-    margin: 0.5rem 0;
-  }
-
-  .toc-nav a {
-    display: block;
-    padding: 0.5rem;
-    color: #24292e;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-  }
-
-  .toc-nav a:hover {
-    background: #e1e4e8;
-    color: #0366d6;
-  }
-
-  .toc-item {
-    margin: 0.3rem 0;
-  }
-
-  .toc-depth-2 {
-    margin-left: 0;
-  }
-
-  .toc-depth-3 {
-    margin-left: 1rem;
-    font-size: 0.9rem;
-  }
-
-  .toc-depth-3 a {
-    color: #586069;
-  }
-
-  .toc-nav a.active {
-    background: #0366d6;
-    color: white;
-    font-weight: 500;
-  }
-
-  .toc-separator {
-    height: 1px;
-    background: #e1e4e8;
-    margin: 1rem 0;
-  }
-
-  .toc-blog-link {
-    color: #0366d6 !important;
-    font-weight: 700 !important;
-    font-size: 1.1rem !important;
-    border-top: 2px solid #0366d6;
-    margin-top: 1.5rem;
-    padding: 1rem 0.5rem;
-    background: #f1f8ff;
-    border-radius: 6px;
-    text-align: center;
-    display: block;
-  }
-
-  .toc-blog-link:hover {
-    background: #0366d6 !important;
-    color: white !important;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(3, 102, 214, 0.3);
-  }
-
-  /* 右側のコンテンツ */
-  .content {
-    flex: 1;
-    padding: 2rem 3rem;
-    max-width: calc(100% - 280px);
-  }
-
-  .prose {
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-    background: none;
-    border-radius: 0;
-    box-shadow: none;
-    backdrop-filter: none;
-    border: none;
-  }
-
-  .title {
-    margin-bottom: 2em;
-    padding: 1em 0;
-    border-bottom: 1px solid #e1e4e8;
-  }
-
-  .title h1 {
-    margin: 0 0 0.5em 0;
-    font-size: 2.2rem;
-    font-weight: 600;
-    color: #24292e;
-    line-height: 1.3;
-  }
-
-  .date {
-    margin-bottom: 0.5em;
-    color: #586069;
-    font-size: 0.9rem;
-  }
-
-  .overview {
-    margin: 2em 0;
-    padding: 1em;
-    background: #f6f8fa;
-    border-left: 4px solid #0366d6;
-    border-radius: 4px;
-  }
-
-  .overview h2 {
-    margin: 0 0 0.5em 0;
-    font-size: 1.3rem;
-    color: #24292e;
-  }
-
-  .overview p {
-    margin: 0;
-    color: #586069;
-    line-height: 1.6;
-  }
-
-  .main-content {
-    margin-top: 2em;
-  }
-
-  /* Markdownコンテンツのスタイル */
-  .prose :global(h2) {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #24292e;
-    margin: 2em 0 1em 0;
-    padding-bottom: 0.3em;
-    border-bottom: 1px solid #e1e4e8;
-  }
-
-  .prose :global(h3) {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #24292e;
-    margin: 1.5em 0 0.8em 0;
-  }
-
-  .prose :global(h4) {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #24292e;
-    margin: 1.2em 0 0.6em 0;
-  }
-
-  .prose :global(p) {
-    color: #24292e;
-    font-size: 1rem;
-    line-height: 1.6;
-    margin: 1em 0;
-  }
-
-  .prose :global(ul),
-  .prose :global(ol) {
-    color: #24292e;
-    line-height: 1.6;
-    margin: 1em 0;
-    padding-left: 2em;
-  }
-
-  .prose :global(li) {
-    margin: 0.3em 0;
-  }
-
-  .prose :global(code) {
-    background: #f6f8fa;
-    padding: 0.2em 0.4em;
-    border-radius: 3px;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    color: #e36209;
-    font-size: 0.9em;
-  }
-
-  .prose :global(pre) {
-    background: #f6f8fa;
-    color: #24292e;
-    padding: 1em;
-    border-radius: 6px;
-    overflow-x: auto;
-    margin: 1em 0;
-    border: 1px solid #e1e4e8;
-  }
-
-  .prose :global(pre code) {
-    background: none;
-    padding: 0;
-    color: inherit;
-  }
-
-  .prose :global(blockquote) {
-    border-left: 4px solid #dfe2e5;
-    padding-left: 1em;
-    margin: 1em 0;
-    color: #6a737d;
-    font-style: italic;
-  }
-
-  .prose :global(a) {
-    color: #0366d6;
-    text-decoration: none;
-  }
-
-  .prose :global(a:hover) {
-    text-decoration: underline;
-  }
-
-  .prose :global(table) {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 1em 0;
-  }
-
-  .prose :global(th),
-  .prose :global(td) {
-    border: 1px solid #dfe2e5;
-    padding: 0.5em;
-    text-align: left;
-  }
-
-  .prose :global(th) {
-    background: #f6f8fa;
-    font-weight: 600;
-  }
-
-  @media (max-width: 768px) {
-    .container {
-      flex-direction: column;
-    }
-
-    .toc {
-      width: 100%;
-      height: auto;
-      position: static;
-      border-right: none;
+  @layer components {
+    /* Markdownコンテンツのスタイル */
+    .prose :global(h2) {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #24292e;
+      margin: 2em 0 1em 0;
+      padding-bottom: 0.3em;
       border-bottom: 1px solid #e1e4e8;
     }
 
-    .content {
-      max-width: 100%;
-      padding: 1rem;
+    .prose :global(h3) {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #24292e;
+      margin: 1.5em 0 0.8em 0;
     }
 
-    .title h1 {
-      font-size: 1.8rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .content {
-      padding: 0.5rem;
+    .prose :global(h4) {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #24292e;
+      margin: 1.2em 0 0.6em 0;
     }
 
-    .title h1 {
-      font-size: 1.5rem;
+    .prose :global(p) {
+      color: #24292e;
+      font-size: 1rem;
+      line-height: 1.6;
+      margin: 1em 0;
     }
 
-    .toc {
-      padding: 0.5rem;
+    .prose :global(ul),
+    .prose :global(ol) {
+      color: #24292e;
+      line-height: 1.6;
+      margin: 1em 0;
+      padding-left: 2em;
+    }
+
+    .prose :global(li) {
+      margin: 0.3em 0;
+    }
+
+    .prose :global(code) {
+      background: #f6f8fa;
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-family:
+        "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      color: #e36209;
+      font-size: 0.9em;
+    }
+
+    .prose :global(pre) {
+      background: #f6f8fa;
+      color: #24292e;
+      padding: 1em;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1em 0;
+      border: 1px solid #e1e4e8;
+    }
+
+    .prose :global(pre code) {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    .prose :global(blockquote) {
+      border-left: 4px solid #dfe2e5;
+      padding-left: 1em;
+      margin: 1em 0;
+      color: #6a737d;
+      font-style: italic;
+    }
+
+    .prose :global(a) {
+      color: #0366d6;
+      text-decoration: none;
+    }
+
+    .prose :global(a:hover) {
+      text-decoration: underline;
+    }
+
+    .prose :global(table) {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+    }
+
+    .prose :global(th),
+    .prose :global(td) {
+      border: 1px solid #dfe2e5;
+      padding: 0.5em;
+      text-align: left;
+    }
+
+    .prose :global(th) {
+      background: #f6f8fa;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .toc {
+        width: 100%;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid #e1e4e8;
+      }
+
+      .content {
+        max-width: 100%;
+        padding: 1rem;
+      }
+
+      .title h1 {
+        font-size: 1.8rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .content {
+        padding: 0.5rem;
+      }
+
+      .title h1 {
+        font-size: 1.5rem;
+      }
+
+      .toc {
+        padding: 0.5rem;
+      }
     }
   }
 </style>

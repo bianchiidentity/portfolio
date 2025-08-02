@@ -10,31 +10,27 @@ const sortedHistories = histories.sort((a, b) => {
 });
 ---
 
-<section class="history-timeline">
+<section class="w-full max-w-[1500px] mx-auto py-[1.5vw] pb-[2vw]">
   {
     sortedHistories.map((item, idx) => (
-      <div class="history-row">
-        <div
-          class="history-col history-col-left history-photo-col"
-          style="position:relative; justify-content: center; align-items: center;"
-        >
+      <div class="flex items-stretch justify-between mb-[90px] relative z-1 first:mb-0">
+        <div class="flex-1 p-[0.5vw] px-[2.5vw] text-right min-w-[180px] max-w-[220px] relative flex justify-center items-center">
           {item.data.images && item.data.images.length > 0 && (
-            <div class="slideshow-container" id={"slideshow-" + idx}>
-              <div class="slideshow-image-wrap">
+            <div class="relative aspect-square w-[clamp(120px,15vw,220px)] mx-auto flex flex-col items-center" id={"slideshow-" + idx}>
+              <div class="relative w-[300px] h-[300px] flex items-center justify-center aspect-square overflow-hidden">
                 <img
                   src={item.data.images[0]}
                   alt={item.data.era + "の写真"}
-                  class="history-photo slideshow-photo"
-                  style="transition: opacity 0.5s; opacity: 1;"
+                  class="w-[140px] h-[140px] object-cover rounded-full border-5 border-gray-300 bg-white shadow-lg m-0 mx-[0.3em] block relative z-2 transition-opacity duration-500 opacity-100"
                   data-idx="0"
                   data-images={item.data.images.join(",")}
                 />
               </div>
               {item.data.images.length > 1 ? (
-                <div class="slideshow-dots">
+                <div class="flex justify-center gap-2 mt-2">
                   {item.data.images.map((_, i) => (
                     <span
-                      class={i === 0 ? "dot active" : "dot"}
+                      class={`w-2 h-2 rounded-full cursor-pointer transition-colors duration-200 ${i === 0 ? "bg-orange-500" : "bg-gray-300"}`}
                       data-dot-idx={i}
                     />
                   ))}
@@ -43,17 +39,17 @@ const sortedHistories = histories.sort((a, b) => {
             </div>
           )}
         </div>
-        <div class="history-col history-col-right">
-          <h2 class="history-era">{item.data.era}</h2>
-          <div class="history-title">{item.data.title}</div>
-          <div class="history-desc">{item.data.desc}</div>
+        <div class="flex-1 p-[0.5vw] px-[2.5vw] text-left min-w-[420px] max-w-[900px]">
+          <h2 class="text-5xl font-bold mb-[0.4em] tracking-wide">{item.data.era}</h2>
+          <div class="text-2xl font-bold mb-[0.7em] tracking-wide">{item.data.title}</div>
+          <div class="text-xl text-gray-800 leading-[2.1] tracking-wide mb-[0.2em]">{item.data.desc}</div>
           {item.data.url && (
-            <div style="margin-top: 0.7em;">
+            <div class="mt-7">
               <a
                 href={item.data.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="history-link-btn"
+                class="inline-block px-5 py-2 bg-orange-500 text-white rounded-full no-underline font-bold text-lg transition-colors duration-200 mt-[0.2em] hover:bg-orange-600 hover:text-white"
               >
                 関連リンクを見る
               </a>
@@ -107,148 +103,36 @@ const sortedHistories = histories.sort((a, b) => {
 </script>
 
 <style>
-  .history-timeline {
-    width: 100%;
-    max-width: 1500px;
-    margin: 0 auto;
-    padding: 1.5vw 0 2vw 0;
-    position: relative;
-  }
-  .history-photo-col {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1;
-    gap: 0.7em;
-    height: 100%;
-  }
-  .history-row {
-    display: flex;
-    align-items: stretch;
-    justify-content: space-between;
-    margin-bottom: 90px;
-    position: relative;
-    z-index: 1;
-  }
-  .history-col {
-    flex: 1 1 0;
-    padding: 0.5vw 2.5vw;
-  }
-  .history-col-left {
-    text-align: right;
-    min-width: 180px;
-    max-width: 220px;
-  }
-  .history-col-right {
-    text-align: left;
-    min-width: 420px;
-    max-width: 900px;
-  }
-  .history-era {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 0.4em;
-    letter-spacing: 0.02em;
-  }
-  .history-title {
-    font-size: 1.45rem;
-    font-weight: bold;
-    margin-bottom: 0.7em;
-    letter-spacing: 0.01em;
-  }
-  .history-desc {
-    font-size: 1.18rem;
-    color: #222;
-    line-height: 2.1;
-    letter-spacing: 0.01em;
-    margin-bottom: 0.2em;
-  }
-  .history-photo {
-    width: 140px;
-    height: 140px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 5px solid #e0e0e0;
-    background: #fff;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-    margin: 0 0.3em;
-    display: block;
-    position: relative;
-    z-index: 2;
-  }
-  .history-link-btn {
-    display: inline-block;
-    padding: 0.5em 1.2em;
-    background: #e67e22;
-    color: #fff;
-    border-radius: 999px;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 1.05em;
-    transition:
-      background 0.18s,
-      color 0.18s;
-    margin-top: 0.2em;
-  }
-  .history-link-btn:hover {
-    background: #d35400;
-    color: #fff;
-  }
-  .history-photo-col {
-    align-items: center;
-  }
-  .history-row:first-child {
-    margin-bottom: 0;
-  }
-  .slideshow-container {
-    position: relative;
-    aspect-ratio: 1 / 1;
-    width: clamp(120px, 15vw, 220px); /* 画面に応じて可変 */
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .slideshow-image-wrap {
-    position: relative;
-    width: 300px;
-    height: 300px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-  }
-  .slideshow-photo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 10px solid #e0e0e0;
-    background: #fff;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-    display: block;
-    position: relative;
-    z-index: 2;
-  }
-  .slideshow-dots {
-    display: flex;
-    justify-content: center;
-    margin-top: 0.5em;
-    gap: 0.3em;
-    position: relative;
-    z-index: 3;
-  }
-  .dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #e0e0e0;
-    display: inline-block;
-    transition: background 0.2s;
-  }
-  .dot.active {
-    background: #e67e22;
+  @layer components {
+    .dot.active {
+      background-color: #e67e22;
+    }
+    
+    @media (max-width: 768px) {
+      .history-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+      
+      .history-col-left,
+      .history-col-right {
+        min-width: auto;
+        max-width: 100%;
+        text-align: center;
+      }
+      
+      .history-era {
+        font-size: 2rem;
+      }
+      
+      .history-title {
+        font-size: 1.2rem;
+      }
+      
+      .history-desc {
+        font-size: 1rem;
+      }
+    }
   }
 </style>

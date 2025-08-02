@@ -4,10 +4,10 @@ import { SITE_GITHUB, SITE_TWITTER } from "../consts";
 const today = new Date();
 ---
 
-<footer>
+<footer class="py-8 px-4 pb-24 bg-gradient-to-b from-gray-100 to-gray-200 text-gray-600 text-center">
   &copy; {today.getFullYear()} 川崎浩史. All rights reserved.
-  <div class="social-links">
-    <a href={SITE_TWITTER} target="_blank">
+  <div class="flex justify-center gap-4 mt-4">
+    <a href={SITE_TWITTER} target="_blank" class="no-underline text-gray-600 hover:text-gray-800 transition-colors duration-200">
       <svg
         viewBox="0 0 16 16"
         aria-hidden="true"
@@ -20,7 +20,7 @@ const today = new Date();
         ></path></svg
       >
     </a>
-    <a href={SITE_GITHUB} target="_blank">
+    <a href={SITE_GITHUB} target="_blank" class="no-underline text-gray-600 hover:text-gray-800 transition-colors duration-200">
       <svg
         viewBox="0 0 16 16"
         aria-hidden="true"
@@ -35,24 +35,3 @@ const today = new Date();
     </a>
   </div>
 </footer>
-<style>
-  footer {
-    padding: 2em 1em 6em 1em;
-    background: linear-gradient(var(--gray-gradient)) no-repeat;
-    color: rgb(var(--gray));
-    text-align: center;
-  }
-  .social-links {
-    display: flex;
-    justify-content: center;
-    gap: 1em;
-    margin-top: 1em;
-  }
-  .social-links a {
-    text-decoration: none;
-    color: rgb(var(--gray));
-  }
-  .social-links a:hover {
-    color: rgb(var(--gray-dark));
-  }
-</style>

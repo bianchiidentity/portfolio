@@ -71,9 +71,15 @@ if (Astro.request.method === "POST") {
               let index = 0;
 
               while (true) {
-                const exercise_name = formData.get(`exercise_name_${index}`) as string;
-                const count = parseInt((formData.get(`count_${index}`) as string) || "0");
-                const weight = parseInt((formData.get(`weight_${index}`) as string) || "0");
+                const exercise_name = formData.get(
+                  `exercise_name_${index}`
+                ) as string;
+                const count = parseInt(
+                  (formData.get(`count_${index}`) as string) || "0"
+                );
+                const weight = parseInt(
+                  (formData.get(`weight_${index}`) as string) || "0"
+                );
 
                 if (!exercise_name) {
                   break; // 種目名がない場合は終了
@@ -102,7 +108,9 @@ if (Astro.request.method === "POST") {
 
             case "book":
               const title = formData.get("title") as string;
-              const pages_read = parseInt((formData.get("pages_read") as string) || "0");
+              const pages_read = parseInt(
+                (formData.get("pages_read") as string) || "0"
+              );
 
               if (!title) {
                 message = "タイトルは必須です";
@@ -121,7 +129,7 @@ if (Astro.request.method === "POST") {
             case "output":
               const type = formData.get("type") as string;
               const chars = parseInt((formData.get("chars") as string) || "0");
-              const is_tech = (formData.get("is_tech") as string) === "true";
+              const is_tech = (formData.get("is_tech") as string) === "1";
 
               if (!type) {
                 message = "種類は必須です";
@@ -138,7 +146,9 @@ if (Astro.request.method === "POST") {
               break;
 
             case "sleep":
-              const hours = parseFloat((formData.get("hours") as string) || "0");
+              const hours = parseFloat(
+                (formData.get("hours") as string) || "0"
+              );
 
               await DB.prepare(
                 `INSERT INTO sleep (date, hours, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
@@ -169,18 +179,46 @@ if (Astro.request.method === "POST") {
 ---
 
 <Layout>
-  <main class="input-container">
-    <div class="input-header">
-      <h1 class="input-title">📊 データ追加</h1>
-      <p class="input-subtitle">ダッシュボードに表示するデータを追加します</p>
+  <main
+    class="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-600 p-8 px-4 relative overflow-x-hidden"
+  >
+    <div class="text-center mb-12 relative z-1">
+      <h1
+        class="text-6xl font-extrabold text-white mb-2 drop-shadow-lg animate-fadeInUp"
+      >
+        📊 データ追加
+      </h1>
+      <p
+        class="text-xl text-white/90 font-light m-0 animate-fadeInUp animation-delay-200"
+      >
+        ダッシュボードに表示するデータを追加します
+      </p>
     </div>
 
-    {message && <div class={`message ${messageType}`}>{message}</div>}
+    {
+      message && (
+        <div
+          class={`max-w-[800px] mx-auto mb-8 p-4 px-6 rounded-xl font-medium text-center relative z-1 animate-fadeInUp ${messageType === "success" ? "bg-green-200/20 border border-green-300/30 text-green-800" : "bg-red-200/20 border border-red-300/30 text-red-800"}`}
+        >
+          {message}
+        </div>
+      )
+    }
 
-    <form method="POST" class="input-form">
-      <div class="form-group">
-        <label for="dataType" class="form-label">データタイプ *</label>
-        <select id="dataType" name="dataType" required class="form-select">
+    <form
+      method="POST"
+      class="max-w-[800px] mx-auto bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl relative z-1"
+    >
+      <div class="mb-6">
+        <label for="dataType" class="block text-gray-700 font-bold mb-2"
+          >データタイプ *</label
+        >
+        <select
+          id="dataType"
+          name="dataType"
+          required
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+        >
           <option value="">データタイプを選択してください</option>
           <option value="exercise">💪 筋トレ</option>
           <option value="book">📚 読書</option>
@@ -189,39 +227,56 @@ if (Astro.request.method === "POST") {
         </select>
       </div>
 
-      <div class="form-group">
-        <label for="date" class="form-label">日付 *</label>
+      <div class="mb-6">
+        <label for="date" class="block text-gray-700 font-bold mb-2"
+          >日付 *</label
+        >
         <input
           type="date"
           id="date"
           name="date"
           required
-          class="form-input"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
           value={new Date().toISOString().split("T")[0]}
         />
       </div>
 
       <!-- 筋トレフォーム -->
-      <div id="exercise-fields" class="data-fields" style="display: none;">
-        <div class="exercise-header">
-          <h3 class="exercise-title">💪 筋トレ種目</h3>
-          <button type="button" id="add-exercise" class="add-exercise-btn"
+      <div id="exercise-fields" class="data-fields hidden">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold text-gray-800">💪 筋トレ種目</h3>
+          <button
+            type="button"
+            id="add-exercise"
+            class="px-6 py-3 bg-indigo-500 text-white font-bold rounded-lg shadow-md hover:bg-indigo-600 transition-colors duration-200"
             >+ 種目を追加</button
           >
         </div>
         <div id="exercise-list">
-          <div class="exercise-item" data-index="0">
-            <div class="exercise-item-header">
-              <span class="exercise-number">種目 1</span>
+          <div
+            class="exercise-item bg-gradient-to-br from-white/95 to-slate-50/95 border border-indigo-200/15 rounded-2xl p-6 mb-6 relative transition-all duration-300 ease-out shadow-lg backdrop-blur-sm"
+            data-index="0"
+          >
+            <div
+              class="flex justify-between items-center mb-5 pb-3 border-b-2 border-indigo-200/10"
+            >
+              <span
+                class="font-bold text-indigo-600 text-base bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent drop-shadow-sm"
+                >種目 1</span
+              >
               <button
                 type="button"
-                class="remove-exercise-btn"
+                class="bg-gradient-to-br from-red-100 to-red-200 text-red-600 border border-red-200 rounded-lg w-7 h-7 flex items-center justify-center cursor-pointer text-lg font-bold transition-all duration-300 ease-out shadow-md hover:shadow-lg"
                 onclick="removeExercise(this)">×</button
               >
             </div>
-            <div class="form-group">
-              <label class="form-label">種目 *</label>
-              <select name="exercise_name_0" class="form-select" required>
+            <div class="mb-6">
+              <label class="block text-gray-700 font-bold mb-2">種目 *</label>
+              <select
+                name="exercise_name_0"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                required
+              >
                 <option value="">種目を選択してください</option>
                 {
                   EXERCISE_LIST.map((exercise) => (
@@ -230,25 +285,27 @@ if (Astro.request.method === "POST") {
                 }
               </select>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">回数</label>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="mb-6">
+                <label class="block text-gray-700 font-bold mb-2">回数</label>
                 <input
                   type="number"
                   name="count_0"
                   min="0"
-                  class="form-input"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                   placeholder="回数"
                 />
               </div>
-              <div class="form-group">
-                <label class="form-label">重量(kg)</label>
+              <div class="mb-6">
+                <label class="block text-gray-700 font-bold mb-2"
+                  >重量(kg)</label
+                >
                 <input
                   type="number"
                   name="weight_0"
                   min="0"
                   step="0.5"
-                  class="form-input"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                   placeholder="重量"
                 />
               </div>
@@ -258,89 +315,111 @@ if (Astro.request.method === "POST") {
       </div>
 
       <!-- 読書フォーム -->
-      <div id="book-fields" class="data-fields" style="display: none;">
-        <div class="form-group">
-          <label for="title" class="form-label">タイトル *</label>
+      <div id="book-fields" class="data-fields hidden">
+        <div class="mb-6">
+          <label for="title" class="block text-gray-700 font-bold mb-2"
+            >タイトル *</label
+          >
           <input
             type="text"
             id="title"
             name="title"
-            class="form-input"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
             placeholder="本のタイトルを入力してください"
           />
         </div>
-        <div class="form-group">
-          <label for="pages_read" class="form-label">読んだページ数</label>
+        <div class="mb-6">
+          <label for="pages_read" class="block text-gray-700 font-bold mb-2"
+            >読んだページ数</label
+          >
           <input
             type="number"
             id="pages_read"
             name="pages_read"
             min="0"
-            class="form-input"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
             placeholder="ページ数"
           />
         </div>
       </div>
 
       <!-- アウトプットフォーム -->
-      <div id="output-fields" class="data-fields" style="display: none;">
-        <div class="form-group">
-          <label for="type" class="form-label">種類 *</label>
+      <div id="output-fields" class="data-fields hidden">
+        <div class="mb-6">
+          <label for="type" class="block text-gray-700 font-bold mb-2"
+            >種類 *</label
+          >
           <input
             type="text"
             id="type"
             name="type"
-            class="form-input"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
             placeholder="ブログ、記事、コードなど"
           />
         </div>
-        <div class="form-group">
-          <label for="chars" class="form-label">文字数</label>
+        <div class="mb-6">
+          <label for="chars" class="block text-gray-700 font-bold mb-2"
+            >文字数</label
+          >
           <input
             type="number"
             id="chars"
             name="chars"
             min="0"
-            class="form-input"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
             placeholder="文字数"
           />
         </div>
-        <div class="form-group">
-          <label class="form-label">技術系コンテンツ</label>
-          <div class="checkbox-group">
-            <label class="checkbox-label">
+        <div class="mb-6">
+          <label class="block text-gray-700 font-bold mb-2"
+            >技術系コンテンツ</label
+          >
+          <div class="flex items-center">
+            <label class="flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 name="is_tech"
-                value="true"
-                class="checkbox-input"
+                value="1"
+                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
               />
-              <span class="checkbox-text">技術系コンテンツ</span>
+              <span class="ml-2 text-gray-700">技術系コンテンツ</span>
             </label>
           </div>
         </div>
       </div>
 
       <!-- 睡眠フォーム -->
-      <div id="sleep-fields" class="data-fields" style="display: none;">
-        <div class="form-group">
-          <label for="hours" class="form-label">睡眠時間(時間)</label>
+      <div id="sleep-fields" class="data-fields hidden">
+        <div class="mb-6">
+          <label for="hours" class="block text-gray-700 font-bold mb-2"
+            >睡眠時間(時間)</label
+          >
           <input
             type="number"
             id="hours"
             name="hours"
             min="0"
             max="24"
-            step="0.1"
-            class="form-input"
+            step="0.5"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
             placeholder="睡眠時間"
           />
         </div>
       </div>
 
-      <div class="form-actions">
-        <button type="submit" class="submit-btn"> 📤 データを保存 </button>
-        <a href="/dashboard" class="cancel-btn"> ❌ キャンセル </a>
+      <div class="flex gap-4 justify-center">
+        <button
+          type="submit"
+          class="px-8 py-4 bg-indigo-500 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-600 transition-colors duration-200"
+        >
+          📤 データを保存
+        </button>
+        <a
+          href="/dashboard"
+          class="px-8 py-4 bg-gray-500 text-white font-bold rounded-lg shadow-lg hover:bg-gray-600 transition-colors duration-200 no-underline"
+        >
+          ❌ キャンセル
+        </a>
       </div>
     </form>
   </main>
@@ -352,21 +431,24 @@ if (Astro.request.method === "POST") {
     const dataTypeSelect = document.getElementById("dataType");
     const dataFields = document.querySelectorAll(".data-fields");
 
-    dataTypeSelect?.addEventListener("change", function (this: HTMLSelectElement) {
-      // すべてのフィールドを非表示
-      dataFields.forEach((field) => {
-        (field as HTMLElement).style.display = "none";
-      });
+    dataTypeSelect?.addEventListener(
+      "change",
+      function (this: HTMLSelectElement) {
+        // すべてのフィールドを非表示
+        dataFields.forEach((field) => {
+          (field as HTMLElement).classList.add("hidden");
+        });
 
-      // 選択されたデータタイプのフィールドを表示
-      const selectedType = this.value;
-      if (selectedType) {
-        const targetField = document.getElementById(`${selectedType}-fields`);
-        if (targetField) {
-          (targetField as HTMLElement).style.display = "block";
+        // 選択されたデータタイプのフィールドを表示
+        const selectedType = this.value;
+        if (selectedType) {
+          const targetField = document.getElementById(`${selectedType}-fields`);
+          if (targetField) {
+            (targetField as HTMLElement).classList.remove("hidden");
+          }
         }
       }
-    });
+    );
 
     // 筋トレ種目の追加
     let exerciseIndex = 1;
@@ -378,48 +460,51 @@ if (Astro.request.method === "POST") {
         const exerciseItem = document.createElement("div");
         exerciseItem.className = "exercise-item";
         exerciseItem.setAttribute("data-index", exerciseIndex.toString());
-        exerciseItem.style.cssText =
-          "background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%); border: 1px solid rgba(102, 126, 234, 0.15); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); backdrop-filter: blur(10px);";
+        exerciseItem.className =
+          "exercise-item bg-gradient-to-br from-white/95 to-slate-50/95 border border-indigo-200/15 rounded-2xl p-6 mb-6 relative transition-all duration-300 ease-out shadow-lg backdrop-blur-sm";
 
         exerciseItem.innerHTML = `
-          <div class="exercise-item-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid rgba(102, 126, 234, 0.1);">
-            <span class="exercise-number" style="font-weight: 700; color: #667eea; font-size: 1rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">種目 ${exerciseIndex + 1}</span>
-            <button type="button" class="remove-exercise-btn" onclick="removeExercise(this)" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);">×</button>
+          <div class="flex justify-between items-center mb-5 pb-3 border-b-2 border-indigo-200/10">
+            <span class="font-bold text-indigo-600 text-base bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent drop-shadow-sm">種目 ${exerciseIndex + 1}</span>
+            <button type="button" class="bg-gradient-to-br from-red-100 to-red-200 text-red-600 border border-red-200 rounded-lg w-7 h-7 flex items-center justify-center cursor-pointer text-lg font-bold transition-all duration-300 ease-out shadow-md hover:shadow-lg" onclick="removeExercise(this)">×</button>
           </div>
-          <div class="form-group">
-            <label class="form-label">種目 *</label>
-            <select name="exercise_name_${exerciseIndex}" class="form-select" required>
+          <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">種目 *</label>
+            <select name="exercise_name_${exerciseIndex}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200" required>
               <option value="">種目を選択してください</option>
               ${(() => {
-                const select = document.querySelector('select[name="exercise_name_0"]') as HTMLSelectElement;
-                if (!select?.options) return '';
+                const select = document.querySelector(
+                  'select[name="exercise_name_0"]'
+                ) as HTMLSelectElement;
+                if (!select?.options) return "";
                 return Array.from(select.options)
-                  .map((option: HTMLOptionElement) =>
-                    `<option value="${option.value}">${option.text}</option>`
+                  .map(
+                    (option: HTMLOptionElement) =>
+                      `<option value="${option.value}">${option.text}</option>`
                   )
                   .join("");
               })()}
             </select>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">回数</label>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="mb-6">
+              <label class="block text-gray-700 font-bold mb-2">回数</label>
               <input
                 type="number"
                 name="count_${exerciseIndex}"
                 min="0"
-                class="form-input"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                 placeholder="回数"
               />
             </div>
-            <div class="form-group">
-              <label class="form-label">重量(kg)</label>
+            <div class="mb-6">
+              <label class="block text-gray-700 font-bold mb-2">重量(kg)</label>
               <input
                 type="number"
                 name="weight_${exerciseIndex}"
                 min="0"
                 step="0.5"
-                class="form-input"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                 placeholder="重量"
               />
             </div>
@@ -447,8 +532,12 @@ if (Astro.request.method === "POST") {
 
         // name属性も更新
         const select = item.querySelector("select") as HTMLSelectElement;
-        const countInput = item.querySelector('input[name^="count_"]') as HTMLInputElement;
-        const weightInput = item.querySelector('input[name^="weight_"]') as HTMLInputElement;
+        const countInput = item.querySelector(
+          'input[name^="count_"]'
+        ) as HTMLInputElement;
+        const weightInput = item.querySelector(
+          'input[name^="weight_"]'
+        ) as HTMLInputElement;
 
         if (select) select.name = `exercise_name_${index}`;
         if (countInput) countInput.name = `count_${index}`;
@@ -460,510 +549,4 @@ if (Astro.request.method === "POST") {
   });
 </script>
 
-<style>
-  .input-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem 1rem;
-    position: relative;
-    overflow-x: hidden;
-  }
 
-  .input-container::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-    pointer-events: none;
-  }
-
-  .input-header {
-    text-align: center;
-    margin-bottom: 3rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .input-title {
-    font-size: 3rem;
-    font-weight: 800;
-    color: white;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    animation: fadeInUp 0.8s ease-out;
-  }
-
-  .input-subtitle {
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 300;
-    margin: 0;
-    animation: fadeInUp 0.8s ease-out 0.2s both;
-  }
-
-  .message {
-    max-width: 800px;
-    margin: 0 auto 2rem auto;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 500;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-    animation: fadeInUp 0.8s ease-out;
-  }
-
-  .message.success {
-    background: rgba(34, 197, 94, 0.2);
-    border: 1px solid rgba(34, 197, 94, 0.3);
-    color: #166534;
-  }
-
-  .message.error {
-    background: rgba(239, 68, 68, 0.2);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #991b1b;
-  }
-
-  .input-form {
-    max-width: 900px;
-    margin: 0 auto;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(248, 250, 252, 0.98) 100%
-    );
-    border-radius: 24px;
-    padding: 2.5rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    position: relative;
-    z-index: 1;
-    animation: fadeInUp 0.8s ease-out 0.4s both;
-  }
-
-  .form-group {
-    margin-bottom: 2rem;
-  }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-
-  .form-label {
-    display: block;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-  }
-
-  .form-input,
-  .form-select {
-    width: 100%;
-    padding: 1rem 1.25rem;
-    border: 2px solid rgba(102, 126, 234, 0.15);
-    border-radius: 16px;
-    font-size: 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(248, 250, 252, 0.95) 100%
-    );
-    color: #374151;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(10px);
-    font-family: inherit;
-  }
-
-  .form-input:focus,
-  .form-select:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow:
-      0 0 0 4px rgba(102, 126, 234, 0.15),
-      0 4px 12px rgba(102, 126, 234, 0.1);
-    transform: translateY(-1px);
-  }
-
-  .checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-    color: #374151;
-  }
-
-  .checkbox-input {
-    width: 1.2rem;
-    height: 1.2rem;
-    accent-color: #667eea;
-  }
-
-  .checkbox-text {
-    font-weight: 500;
-  }
-
-  .data-fields {
-    background: rgba(102, 126, 234, 0.05);
-    border: 1px solid rgba(102, 126, 234, 0.1);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 2rem;
-    flex-wrap: wrap;
-  }
-
-  .submit-btn,
-  .cancel-btn {
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .submit-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-    border-radius: 16px;
-    padding: 1.25rem 2.5rem;
-    font-weight: 700;
-    font-size: 1.1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .submit-btn::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.2),
-      transparent
-    );
-    transition: left 0.5s;
-  }
-
-  .submit-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-  }
-
-  .submit-btn:hover::before {
-    left: 100%;
-  }
-
-  .cancel-btn {
-    background: linear-gradient(
-      135deg,
-      rgba(239, 68, 68, 0.1) 0%,
-      rgba(220, 38, 38, 0.1) 100%
-    );
-    color: #dc2626;
-    border: 2px solid rgba(239, 68, 68, 0.2);
-    border-radius: 16px;
-    padding: 1.25rem 2.5rem;
-    font-weight: 700;
-    font-size: 1.1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .cancel-btn:hover {
-    background: linear-gradient(
-      135deg,
-      rgba(239, 68, 68, 0.2) 0%,
-      rgba(220, 38, 38, 0.2) 100%
-    );
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .input-title {
-      font-size: 2.5rem;
-    }
-
-    .input-form {
-      margin: 0 1rem;
-      padding: 2rem 1.5rem;
-    }
-
-    .form-row {
-      grid-template-columns: 1fr;
-    }
-
-    .form-actions {
-      flex-direction: column;
-    }
-
-    .submit-btn,
-    .cancel-btn {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-
-  /* 筋トレ複数種目対応のスタイル */
-  .exercise-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.15);
-  }
-
-  .exercise-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #374151;
-    margin: 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  .add-exercise-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.25);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .add-exercise-btn::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.2),
-      transparent
-    );
-    transition: left 0.5s;
-  }
-
-  .add-exercise-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-  }
-
-  .add-exercise-btn:hover::before {
-    left: 100%;
-  }
-
-  .exercise-item {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(248, 250, 252, 0.95) 100%
-    );
-    border: 1px solid rgba(102, 126, 234, 0.15);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    position: relative;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    backdrop-filter: blur(10px);
-  }
-
-  .exercise-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    border-color: rgba(102, 126, 234, 0.25);
-  }
-
-  .exercise-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
-  }
-
-  .exercise-number {
-    font-weight: 700;
-    color: #667eea;
-    font-size: 1rem;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  .remove-exercise-btn {
-    background: linear-gradient(
-      135deg,
-      rgba(239, 68, 68, 0.1) 0%,
-      rgba(220, 38, 38, 0.1) 100%
-    );
-    color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 8px;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: bold;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-  }
-
-  .remove-exercise-btn:hover {
-    background: linear-gradient(
-      135deg,
-      rgba(239, 68, 68, 0.2) 0%,
-      rgba(220, 38, 38, 0.2) 100%
-    );
-    transform: scale(1.15) rotate(90deg);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-  }
-
-  /* 動的に作成される要素のための追加スタイル */
-  #exercise-list .exercise-item {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(248, 250, 252, 0.95) 100%
-    );
-    border: 1px solid rgba(102, 126, 234, 0.15);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    position: relative;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    backdrop-filter: blur(10px);
-  }
-
-  #exercise-list .exercise-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    border-color: rgba(102, 126, 234, 0.25);
-  }
-
-  #exercise-list .exercise-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
-  }
-
-  #exercise-list .exercise-number {
-    font-weight: 700;
-    color: #667eea;
-    font-size: 1rem;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  #exercise-list .remove-exercise-btn {
-    background: linear-gradient(
-      135deg,
-      rgba(239, 68, 68, 0.1) 0%,
-      rgba(220, 38, 38, 0.1) 100%
-    );
-    color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 8px;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: bold;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-  }
-
-  #exercise-list .remove-exercise-btn:hover {
-    background: linear-gradient(
-      135deg,
-      rgba(239, 68, 68, 0.2) 0%,
-      rgba(220, 38, 38, 0.2) 100%
-    );
-    transform: scale(1.15) rotate(90deg);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-  }
-
-  @media (max-width: 480px) {
-    .input-container {
-      padding: 1rem 0.5rem;
-    }
-
-    .input-title {
-      font-size: 2rem;
-    }
-
-    .input-form {
-      padding: 1.5rem 1rem;
-    }
-  }
-</style>

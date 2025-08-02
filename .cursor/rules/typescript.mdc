@@ -1,0 +1,15 @@
+---
+description: TypeScript type rules
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.astro"
+  - "tsconfig.json"
+alwaysApply: false
+---
+
+## 型注釈
+- 関数の戻り値や引数には明示的な型をつける。省略しない
+- typeを使い、interfaceは使わない
+- ユーティリティ型を積極的に使用する
+- nullは使用しない。

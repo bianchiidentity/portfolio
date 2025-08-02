@@ -7,31 +7,31 @@ export type Props = {
 const { bookData } = Astro.props;
 ---
 
-<div class="log-card book-log">
-  <div class="log-header">
-    <h3 class="log-title">📚 読書ログ</h3>
-    <span class="log-count">{bookData.length}件</span>
+<div class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl">
+  <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-indigo-200/10">
+    <h3 class="text-lg font-bold text-gray-800 m-0">📚 読書ログ</h3>
+    <span class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold">{bookData.length}件</span>
   </div>
-  <div class="log-content">
+  <div class="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
     {
       bookData.length > 0 ? (
         bookData.slice(0, 10).map((item) => (
-          <div class="log-item">
-            <div class="log-icon">📖</div>
-            <div class="log-info">
-              <div class="log-main">
-                <span class="log-name">{item.title}</span>
-                <span class="log-date">{item.date}</span>
+          <div class="flex items-center gap-3 p-3 bg-indigo-50/50 border border-indigo-200/10 rounded-lg transition-all duration-300 hover:bg-indigo-100/50 hover:translate-x-1">
+            <div class="text-xl w-9 h-9 flex items-center justify-center bg-indigo-100 rounded-lg flex-shrink-0">📖</div>
+            <div class="flex-1">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-semibold text-gray-800">{item.title}</span>
+                <span class="text-xs text-gray-600 font-medium">{item.date}</span>
               </div>
-              <div class="log-details">
-                <span class="log-detail">{item.pages_read || 0}ページ</span>
+              <div class="flex gap-4 items-center">
+                <span class="text-sm text-gray-600 font-medium">{item.pages_read || 0}ページ</span>
               </div>
             </div>
           </div>
         ))
       ) : (
-        <div class="empty-log">
-          <p>まだ読書データがありません</p>
+        <div class="text-center py-8 text-gray-600">
+          <p class="m-0 text-base">まだ読書データがありません</p>
         </div>
       )
     }
@@ -39,142 +39,22 @@ const { bookData } = Astro.props;
 </div>
 
 <style>
-  .log-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-  }
+  @layer components {
+    @media (max-width: 480px) {
+      .log-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+      }
 
-  .log-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  }
+      .log-main {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
 
-  .log-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
-  }
-
-  .log-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #374151;
-    margin: 0;
-  }
-
-  .log-count {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .log-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
-  .log-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background: rgba(102, 126, 234, 0.05);
-    border: 1px solid rgba(102, 126, 234, 0.1);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-  }
-
-  .log-item:hover {
-    background: rgba(102, 126, 234, 0.1);
-    transform: translateX(4px);
-  }
-
-  .log-icon {
-    font-size: 1.25rem;
-    width: 35px;
-    height: 35px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: 8px;
-    flex-shrink: 0;
-  }
-
-  .log-info {
-    flex: 1;
-  }
-
-  .log-main {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-
-  .log-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #374151;
-  }
-
-  .log-date {
-    font-size: 0.75rem;
-    color: #6b7280;
-    font-weight: 500;
-  }
-
-  .log-details {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .log-detail {
-    font-size: 0.8rem;
-    color: #6b7280;
-    font-weight: 500;
-  }
-
-  .empty-log {
-    text-align: center;
-    padding: 2rem;
-    color: #6b7280;
-  }
-
-  .empty-log p {
-    margin: 0;
-    font-size: 1rem;
-  }
-
-  @media (max-width: 480px) {
-    .log-item {
-      flex-direction: column;
-      text-align: center;
-      gap: 0.5rem;
-    }
-
-    .log-main {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .log-details {
-      justify-content: center;
+      .log-details {
+        justify-content: center;
+      }
     }
   }
 </style>
