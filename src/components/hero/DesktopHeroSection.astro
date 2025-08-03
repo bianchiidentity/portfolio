@@ -14,6 +14,12 @@ const { images = [] } = Astro.props;
     preserveAspectRatio="none"
     xmlns="http://www.w3.org/2000/svg"
   >
+    <defs>
+      <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0" stop-color="#e67e22"></stop>
+        <stop offset="1" stop-color="#e65245"></stop>
+      </linearGradient>
+    </defs>
     <path
       d="
       M0,0 H900 V600 H0 Z
@@ -21,7 +27,7 @@ const { images = [] } = Astro.props;
       A700,700 0 0,1 205,0
       L900,0 Z
     "
-      fill="#e67e22"
+      fill="url(#heroGradient)"
       fill-rule="evenodd"></path>
   </svg>
   <div
