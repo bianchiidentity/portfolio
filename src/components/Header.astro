@@ -70,7 +70,7 @@ const { currentPage } = Astro.props;
 
     <!-- モバイルハンバーガーボタン -->
     <button
-      class="md:hidden flex flex-col bg-none border-none cursor-pointer p-0 w-9 h-9 justify-around relative z-10 hamburger"
+      class="md:hidden flex flex-col bg-none border-none cursor-pointer p-0 w-9 h-9 justify-around relative z-20 hamburger"
       id="hamburger"
       aria-label="メニュー"
     >
@@ -88,82 +88,156 @@ const { currentPage } = Astro.props;
 
   <!-- モバイルナビゲーション -->
   <nav
-    class="md:hidden fixed top-0 left-[-100%] w-full h-screen bg-amber-50/95 flex flex-col justify-start items-center transition-left duration-300 ease-in-out pt-20 box-border header-nav"
+    class="md:hidden fixed top-0 left-0 w-full h-screen bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 flex flex-col justify-start items-center transition-all duration-500 ease-in-out pt-20 box-border header-nav z-40"
     id="mobile-nav"
+    style="left: -100%;"
   >
-    <ul
-      class="flex flex-col gap-0 items-stretch w-full max-w-md mt-10 nav-list"
+    <button
+      class="absolute top-6 right-6 w-12 h-12 flex items-center justify-center bg-transparent border-2 border-white rounded-full shadow-lg transition-all duration-300 ease-in-out close-btn hover:bg-white/10 hover:scale-110 z-50"
+      id="close-btn"
+      aria-label="メニューを閉じる"
     >
-      <li class="border-b border-gray-300 w-full">
-        <a
-          href="/"
-          class="text-lg py-4 text-orange-500 no-underline font-medium block w-full text-center transition-colors duration-200 hover:text-orange-700"
-          >Home</a
-        >
-      </li>
-      <li class="border-b border-gray-300 w-full">
-        <a
-          href="/profile"
-          class="text-lg py-4 text-orange-500 no-underline font-medium block w-full text-center transition-colors duration-200 hover:text-orange-700"
-          >プロフィール</a
-        >
-      </li>
-      <li class="border-b border-gray-300 w-full">
-        <a
-          href="/dashboard"
-          class="text-lg py-4 text-orange-500 no-underline font-medium block w-full text-center transition-colors duration-200 hover:text-orange-700"
-          >ダッシュボード</a
-        >
-      </li>
-      <li class="w-full">
-        <a
-          href="/blog"
-          class="text-lg py-4 text-orange-500 no-underline font-medium block w-full text-center transition-colors duration-200 hover:text-orange-700"
-          >blog</a
-        >
-      </li>
-    </ul>
+      <svg
+        class="w-6 h-6 text-white"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="3"
+          d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden">
+      <div
+        class="absolute top-20 left-10 w-32 h-32 bg-orange-400/20 rounded-full blur-xl"
+      >
+      </div>
+      <div
+        class="absolute bottom-20 right-10 w-40 h-40 bg-orange-300/20 rounded-full blur-xl"
+      >
+      </div>
+      <div
+        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-orange-400/10 rounded-full blur-2xl"
+      >
+      </div>
+    </div>
+
+    <div class="relative z-10 w-full max-w-2xl mt-20 px-8">
+      <ul class="flex flex-col gap-8 items-stretch w-full nav-list">
+        <li class="w-full">
+          <a
+            href="/"
+            class="text-3xl py-12 text-white no-underline font-black block w-full text-left transition-all duration-300 hover:text-orange-100 hover:bg-orange-600/20 rounded-xl px-8 hover:shadow-lg hover:scale-105 transform flex items-center gap-6 border-b-2 border-white/20 hover:border-white/40"
+            ><span class="text-orange-200 text-4xl">→</span> Home</a
+          >
+        </li>
+        <li class="w-full">
+          <a
+            href="/profile"
+            class="text-3xl py-12 text-white no-underline font-black block w-full text-left transition-all duration-300 hover:text-orange-100 hover:bg-orange-600/20 rounded-xl px-8 hover:shadow-lg hover:scale-105 transform flex items-center gap-6 border-b-2 border-white/20 hover:border-white/40"
+            ><span class="text-orange-200 text-4xl">→</span> プロフィール</a
+          >
+        </li>
+        <li class="w-full">
+          <a
+            href="/dashboard"
+            class="text-3xl py-12 text-white no-underline font-black block w-full text-left transition-all duration-300 hover:text-orange-100 hover:bg-orange-600/20 rounded-xl px-8 hover:shadow-lg hover:scale-105 transform flex items-center gap-6 border-b-2 border-white/20 hover:border-white/40"
+            ><span class="text-orange-200 text-4xl">→</span> ダッシュボード</a
+          >
+        </li>
+        <li class="w-full">
+          <a
+            href="/blog"
+            class="text-3xl py-12 text-white no-underline font-black block w-full text-left transition-all duration-300 hover:text-orange-100 hover:bg-orange-600/20 rounded-xl px-8 hover:shadow-lg hover:scale-105 transform flex items-center gap-6 border-b-2 border-white/20 hover:border-white/40"
+            ><span class="text-orange-200 text-4xl">→</span> blog</a
+          >
+        </li>
+      </ul>
+    </div>
+
+    <div class="absolute bottom-10 left-0 right-0 text-center">
+      <div class="text-orange-200/80 text-lg font-bold">
+        川崎浩史のポートフォリオ
+      </div>
+    </div>
   </nav>
 </header>
 
 <script>
-  type HamburgerElements = {
-    hamburger: HTMLElement | null;
-    mobileNav: HTMLElement | null;
-  };
+  document.addEventListener("DOMContentLoaded", function () {
+    const hamburger = document.getElementById("hamburger");
+    const mobileNav = document.getElementById("mobile-nav");
+    const closeBtn = document.getElementById("close-btn");
 
-  const elements: HamburgerElements = {
-    hamburger: document.getElementById("hamburger"),
-    mobileNav: document.getElementById("mobile-nav"),
-  };
+    if (hamburger && mobileNav && closeBtn) {
+      hamburger.addEventListener("click", function (e) {
+        e.preventDefault();
+        mobileNav.classList.add("active");
+      });
 
-  elements.hamburger?.addEventListener("click", (): void => {
-    elements.hamburger?.classList.toggle("active");
-    elements.mobileNav?.classList.toggle("active");
+      closeBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        mobileNav.classList.toggle("active");
+      });
+
+      const menuLinks = mobileNav.querySelectorAll("a");
+      menuLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+          mobileNav.classList.remove("active");
+        });
+      });
+
+      mobileNav.addEventListener("click", function (e) {
+        if (e.target === mobileNav) {
+          mobileNav.classList.remove("active");
+        }
+      });
+    }
   });
 </script>
 
 <style>
   @layer components {
-    .hamburger.active span:nth-child(1) {
-      transform: rotate(45deg) translate(8px, 8px);
-    }
-
-    .hamburger.active span:nth-child(2) {
-      opacity: 0;
-    }
-
-    .hamburger.active span:nth-child(3) {
-      transform: rotate(-45deg) translate(8px, -8px);
-    }
-
     .header-nav.active {
-      left: 0;
+      left: 0 !important;
+    }
+
+    .close-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .nav-list a {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-list a::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+      );
+      transition: left 0.5s;
+    }
+
+    .nav-list a:hover::before {
+      left: 100%;
     }
 
     @media (max-width: 480px) {
       .nav-list a {
-        font-size: 16px;
+        font-size: 20px;
       }
     }
   }
