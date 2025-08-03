@@ -1,0 +1,151 @@
+---
+type Props = {
+  images?: string[];
+};
+
+const { images = [] } = Astro.props;
+---
+
+<main
+  class="hero-section relative w-full min-w-0 bg-white box-border overflow-hidden block md:hidden"
+>
+  <svg
+    class="mobile-svg block absolute bottom-0 left-0 w-full h-2/3 z-3"
+    style="transform: translateY(50%);"
+    xmlns="http://www.w3.org/2000/svg"
+    width="100%"
+    height="66%"
+    viewBox="0 0 375.001 200"
+    preserveAspectRatio="xMidYMid slice"
+  >
+    <defs>
+      <linearGradient
+        id="linear-gradient"
+        x1="0.041"
+        y1="-0.022"
+        x2="1.03"
+        y2="1"
+        gradientUnits="objectBoundingBox"
+      >
+        <stop offset="0" stop-color="#e67e22"></stop>
+        <stop offset="1" stop-color="#e65245"></stop>
+      </linearGradient>
+      <clipPath id="clip-path">
+        <path
+          d="M215.232,375H0V0H307.412C288.465,42.215,271.7,89.495,257.576,140.527A1326.09,1326.09,0,0,0,223.213,307.12c-3.2,22.55-5.886,45.388-7.981,67.88Z"
+          transform="translate(0 387.405) rotate(-90)"
+          fill="#fff"
+          stroke="#707070"
+          stroke-width="1"></path>
+      </clipPath>
+    </defs>
+    <g transform="translate(0 -79.992)" clip-path="url(#clip-path)">
+      <g transform="translate(-10.812 -630.794)">
+        <rect
+          width="375"
+          height="1017.938"
+          transform="translate(11)"
+          fill="url(#linear-gradient)"></rect>
+      </g>
+    </g>
+  </svg>
+
+  <!-- 背景画像（横幅いっぱい） -->
+  <div
+    class="absolute top-0 left-0 w-full h-full overflow-hidden z-1 md:left-[calc(600/900*100%)] md:w-[calc(100%-(600/900*100%))]"
+  >
+    {
+      images.map((image, index) => (
+        <img
+          class={`hero-image absolute top-0 left-0 w-full h-full object-cover object-center transition-opacity duration-1000 z-1 pointer-events-none ${index === 0 ? "opacity-100" : "opacity-0"}`}
+          src={image}
+          alt={`自画像${index + 1}`}
+        />
+      ))
+    }
+  </div>
+
+  <!-- メインテキスト（左側上部） -->
+  <div
+    class="absolute left-0 top-0 h-[60%] w-[70%] min-w-[320px] max-w-[70vw] flex flex-col justify-start items-start pl-[4vw] pt-[20vh] md:pt-[15vh] lg:pt-[12vh] z-4 text-white text-left drop-shadow-lg"
+  >
+    <div
+      class="text-[2vw] md:text-[1.5vw] lg:text-[1.2vw] text-yellow-400 font-bold mb-[1.2em] md:mb-[0.8em] lg:mb-[0.6em] drop-shadow-lg"
+    >
+      Webエンジニア
+    </div>
+    <div
+      class="text-[1.5vw] md:text-[1.2vw] lg:text-[1vw] text-white mb-[0.2em] tracking-wider drop-shadow-lg"
+    >
+      かわさき こうじ
+    </div>
+    <h1
+      class="text-[7vw] md:text-[5vw] lg:text-[4vw] font-black m-0 mb-[0.5em] md:mb-[0.3em] lg:mb-[0.2em] tracking-wide text-white drop-shadow-lg"
+    >
+      川崎浩史
+    </h1>
+    <div
+      class="text-[2vw] md:text-[1.5vw] lg:text-[1.2vw] mb-[2em] md:mb-[1em] lg:mb-[0.8em] text-white drop-shadow-lg"
+    >
+      技術で人を幸せに。<br />UI/UX・フロントエンド・クラウドが得意です。
+    </div>
+  </div>
+</main>
+
+<script>
+  type ImageSlider = {
+    idx: number;
+    images: NodeListOf<Element>;
+    interval: number;
+  };
+
+  const slider: ImageSlider = {
+    idx: 0,
+    images: document.querySelectorAll(".hero-image"),
+    interval: 4000,
+  };
+
+  if (slider.images.length > 1) {
+    setInterval((): void => {
+      slider.images.forEach((img, i) =>
+        img.classList.toggle("active", i === slider.idx)
+      );
+      slider.idx = (slider.idx + 1) % slider.images.length;
+    }, slider.interval);
+  }
+</script>
+
+<style>
+  .hero-section {
+    height: calc(100dvh - 10vh);
+  }
+
+  @media (max-width: 767px) {
+    .hero-section {
+      height: 35vh;
+      max-height: 35vh;
+      min-height: 35vh;
+    }
+
+    .hero-section svg {
+      height: 35vh;
+      max-height: 35vh;
+    }
+
+    .hero-section > div {
+      height: 35vh;
+      max-height: 35vh;
+    }
+
+    .hero-section .hero-image {
+      height: 35vh;
+      max-height: 35vh;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .hero-section {
+      height: 95vh;
+    }
+  }
+</style>

@@ -1,0 +1,83 @@
+---
+type Props = {
+  images?: string[];
+};
+const { images = [] } = Astro.props;
+---
+
+<main
+  class="relative h-[calc(100dvh-10vh)] w-screen min-w-0 bg-white box-border hidden md:block"
+>
+  <svg
+    class="block absolute top-0 left-0 w-full h-full z-2"
+    viewBox="0 0 900 600"
+    preserveAspectRatio="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="
+      M0,0 H900 V600 H0 Z
+      M900,700
+      A700,700 0 0,1 205,0
+      L900,0 Z
+    "
+      fill="#e67e22"
+      fill-rule="evenodd"></path>
+  </svg>
+  <div
+    class="absolute top-0 left-[calc(205/900*100vw)] w-[calc(100vw-(205/900*100vw))] h-full overflow-hidden z-1"
+  >
+    {
+      images.map((image, index) => (
+        <img
+          class={`absolute top-0 left-0 w-full h-full object-cover object-left-center transition-opacity duration-1000 z-1 pointer-events-none ${index === 0 ? "opacity-100" : "opacity-0"}`}
+          src={image}
+          alt={`自画像${index + 1}`}
+        />
+      ))
+    }
+  </div>
+  <div
+    class="absolute left-0 top-0 h-full w-[50vw] min-w-[320px] flex flex-col justify-start items-start pl-[4vw] pt-[28vh] z-3 text-white text-left drop-shadow-lg"
+  >
+    <div class="text-[2vw] text-yellow-400 font-bold mb-[1.2em] drop-shadow-lg">
+      Webエンジニア
+    </div>
+    <div
+      class="text-[1.5vw] text-white mb-[0.2em] tracking-wider drop-shadow-lg"
+    >
+      かわさき こうじ
+    </div>
+    <h1
+      class="text-[7vw] font-black m-0 mb-[0.5em] tracking-wide text-white drop-shadow-lg"
+    >
+      川崎浩史
+    </h1>
+    <div class="text-[2vw] mb-[2em] text-white drop-shadow-lg">
+      技術で人を幸せに。<br />UI/UX・フロントエンド・クラウドが得意です。
+    </div>
+  </div>
+</main>
+
+<script>
+  type ImageSlider = {
+    idx: number;
+    images: NodeListOf<Element>;
+    interval: number;
+  };
+
+  const slider: ImageSlider = {
+    idx: 0,
+    images: document.querySelectorAll(".hero-image"),
+    interval: 4000,
+  };
+
+  if (slider.images.length > 1) {
+    setInterval((): void => {
+      slider.images.forEach((img, i) =>
+        img.classList.toggle("active", i === slider.idx)
+      );
+      slider.idx = (slider.idx + 1) % slider.images.length;
+    }, slider.interval);
+  }
+</script>
