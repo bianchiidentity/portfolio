@@ -15,8 +15,15 @@ const history = defineCollection({
     era: z.string(),
     title: z.string(),
     desc: z.string(),
-    images: z.array(z.string()).max(3).optional(), // 画像最大3枚
-    url: z.string().url().optional(), // URL追加
+    images: z.array(z.string()).max(4).optional(), // 画像最大4枚
+    urls: z
+      .array(
+        z.object({
+          url: z.string().url(),
+          title: z.string(),
+        })
+      )
+      .optional(), // URL配列
   }),
 });
 

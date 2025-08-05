@@ -10,4 +10,7 @@ desc: |
   社内の皆さまには昼食をご一緒させていただいたり、お気遣いをいただく場面も多く、非常に印象に残るインターンシップとなった。
 images:
   - /history/6/nacl.jpg
+urls:
+  - url: https://github.com/bianchiidentity/dxruby_sdl
+    title: GitHub:インターン成果物,dxruby_sdlリポジトリ
 ---

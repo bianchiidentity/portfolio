@@ -10,18 +10,21 @@ const sortedHistories = histories.sort((a, b) => {
 });
 ---
 
-<section class="w-full max-w-[1500px] mx-auto py-[1.5vw] pb-[2vw]">
+<section class="w-full max-w-[1500px] mx-auto py-[1vw] pb-[1.5vw]">
   {
     sortedHistories.map((item, idx) => (
-      <div class="flex items-stretch justify-between mb-[90px] relative z-1 first:mb-0">
-        <div class="flex-1 p-[0.5vw] px-[2.5vw] text-right min-w-[180px] max-w-[220px] relative flex justify-center items-center">
+      <div class="flex flex-col md:flex-row items-center md:items-stretch justify-between mb-[80px] relative z-1 first:mb-0 gap-8 md:gap-12 pb-6 border-b border-gray-100 last:border-b-0">
+        <div class="flex-1 p-[0.5vw] px-[2.5vw] text-center md:text-right min-w-[250px] max-w-[350px] relative flex justify-center items-center">
           {item.data.images && item.data.images.length > 0 && (
-            <div class="relative aspect-square w-[clamp(120px,15vw,220px)] mx-auto flex flex-col items-center" id={"slideshow-" + idx}>
-              <div class="relative w-[300px] h-[300px] flex items-center justify-center aspect-square overflow-hidden">
+            <div
+              class="slideshow-container relative aspect-square w-[clamp(180px,22vw,350px)] mx-auto flex flex-col items-center"
+              id={"slideshow-" + idx}
+            >
+              <div class="relative w-[300px] h-[300px] flex items-center justify-center aspect-square overflow-hidden rounded-full">
                 <img
                   src={item.data.images[0]}
                   alt={item.data.era + "の写真"}
-                  class="w-[140px] h-[140px] object-cover rounded-full border-5 border-gray-300 bg-white shadow-lg m-0 mx-[0.3em] block relative z-2 transition-opacity duration-500 opacity-100"
+                  class="slideshow-photo w-[180px] h-[180px] md:w-[220px] md:h-[220px] lg:w-[260px] lg:h-[260px] xl:w-[300px] xl:h-[300px] object-cover rounded-full border-4 border-gray-300 bg-white shadow-lg m-0 mx-[0.3em] block relative z-2 transition-opacity duration-500 opacity-100 aspect-square"
                   data-idx="0"
                   data-images={item.data.images.join(",")}
                 />
@@ -30,7 +33,7 @@ const sortedHistories = histories.sort((a, b) => {
                 <div class="flex justify-center gap-2 mt-2">
                   {item.data.images.map((_, i) => (
                     <span
-                      class={`w-2 h-2 rounded-full cursor-pointer transition-colors duration-200 ${i === 0 ? "bg-orange-500" : "bg-gray-300"}`}
+                      class={`dot w-2 h-2 rounded-full cursor-pointer transition-colors duration-200 ${i === 0 ? "active" : ""}`}
                       data-dot-idx={i}
                     />
                   ))}
@@ -39,20 +42,28 @@ const sortedHistories = histories.sort((a, b) => {
             </div>
           )}
         </div>
-        <div class="flex-1 p-[0.5vw] px-[2.5vw] text-left min-w-[420px] max-w-[900px]">
-          <h2 class="text-5xl font-bold mb-[0.4em] tracking-wide">{item.data.era}</h2>
-          <div class="text-2xl font-bold mb-[0.7em] tracking-wide">{item.data.title}</div>
-          <div class="text-xl text-gray-800 leading-[2.1] tracking-wide mb-[0.2em]">{item.data.desc}</div>
-          {item.data.url && (
-            <div class="mt-7">
-              <a
-                href={item.data.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-block px-5 py-2 bg-orange-500 text-white rounded-full no-underline font-bold text-lg transition-colors duration-200 mt-[0.2em] hover:bg-orange-600 hover:text-white"
-              >
-                関連リンクを見る
-              </a>
+        <div class="flex-1 p-[0.5vw] px-[2.5vw] text-center md:text-left min-w-[320px] max-w-[900px]">
+          <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-[0.4em] tracking-wide text-gray-800">
+            {item.data.era}
+          </h2>
+          <div class="text-xl md:text-2xl font-bold mb-[0.7em] tracking-wide text-orange-600">
+            {item.data.title}
+          </div>
+          <div class="text-base md:text-lg lg:text-xl text-gray-800 leading-[2.3] tracking-wide mb-[0.2em] whitespace-pre-line space-y-4 mt-4">
+            {item.data.desc}
+          </div>
+          {item.data.urls && item.data.urls.length > 0 && (
+            <div class="mt-7 flex flex-col gap-3">
+              {item.data.urls.map((urlItem) => (
+                <a
+                  href={urlItem.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-block px-5 py-2 bg-orange-500 text-white rounded-full no-underline font-bold text-lg transition-colors duration-200 hover:bg-orange-600 hover:text-white"
+                >
+                  {urlItem.title}
+                </a>
+              ))}
             </div>
           )}
         </div>
@@ -104,35 +115,76 @@ const sortedHistories = histories.sort((a, b) => {
 
 <style>
   @layer components {
+    .dot {
+      background-color: #d1d5db;
+    }
+
     .dot.active {
       background-color: #e67e22;
     }
-    
+
     @media (max-width: 768px) {
       .history-row {
         flex-direction: column;
         align-items: center;
         gap: 20px;
       }
-      
+
       .history-col-left,
       .history-col-right {
         min-width: auto;
         max-width: 100%;
         text-align: center;
       }
-      
+
       .history-era {
         font-size: 2rem;
       }
-      
+
       .history-title {
         font-size: 1.2rem;
       }
-      
+
       .history-desc {
         font-size: 1rem;
       }
+    }
+
+    @media (max-width: 480px) {
+      section {
+        padding: 20px 10px 30px 10px;
+      }
+
+      .flex-1 {
+        padding: 10px 15px !important;
+      }
+    }
+
+    .whitespace-pre-line {
+      white-space: pre-line;
+    }
+
+    .space-y-4 > * + * {
+      margin-top: 1rem;
+    }
+
+    .border-b {
+      border-bottom-width: 1px;
+    }
+
+    .border-gray-100 {
+      border-color: #f3f4f6;
+    }
+
+    .aspect-square {
+      aspect-ratio: 1 / 1;
+    }
+
+    img.aspect-square {
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
     }
   }
 </style>

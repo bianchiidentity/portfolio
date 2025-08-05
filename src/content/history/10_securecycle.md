@@ -15,4 +15,11 @@ desc: |
 images:
   - /history/10/ctf.jpg
   - /history/10/mitou.jpg
+urls:
+  - url: https://www.facebook.com/photo/?fbid=556442796485310&set=a.498588502270740
+    title: Facebook:CyberSeaGame公式
+  - url: https://mitou-fukuoka.org/works/gunshield/
+    title: 福岡未踏採択ページ
+  - url: https://note.com/mitou_fukuoka/n/na5dea17612cc?magazine_key=m13aa60d7c33d
+    title: Note:福岡未踏公式紹介文
 ---
