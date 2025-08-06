@@ -13,14 +13,18 @@ const { exerciseData } = Astro.props;
   <h3 class="text-lg font-bold text-gray-800 m-0 mb-4 text-center">
     筋トレ負荷スコアの推移
   </h3>
-  <canvas
-    id="exerciseChart"
-    width="400"
-    height="200"
-    class="w-full h-[200px] md:h-[250px]"></canvas>
+  <div class="h-[200px] md:h-[250px]">
+    <canvas id="exerciseChart" width="400" height="200" class="w-full h-full"
+    ></canvas>
+  </div>
 </div>
 
 <script is:inline define:vars={{ exerciseData }}>
+  // グローバル変数でChartインスタンスを管理
+  if (typeof window.exerciseChartInstance === "undefined") {
+    window.exerciseChartInstance = null;
+  }
+
   // Chart.jsが読み込まれているか確認
   function initializeExerciseChart() {
     if (typeof Chart === "undefined") {
@@ -29,12 +33,18 @@ const { exerciseData } = Astro.props;
       return;
     }
 
+    // 既存のグラフを破棄
+    if (window.exerciseChartInstance) {
+      window.exerciseChartInstance.destroy();
+      window.exerciseChartInstance = null;
+    }
+
     const hasExerciseData = exerciseData && exerciseData.length > 0;
 
     // グラフの設定
     const chartOptions = {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: true,
       scales: {
         y: {
           beginAtZero: true,
@@ -87,7 +97,7 @@ const { exerciseData } = Astro.props;
             ],
           };
 
-          new Chart(exerciseCtx, {
+          window.exerciseChartInstance = new Chart(exerciseCtx, {
             type: "line",
             data: exerciseChartData,
             options: {

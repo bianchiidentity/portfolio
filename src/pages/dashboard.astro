@@ -6,56 +6,15 @@ import Heatmap from "../components/dashboard/Heatmap.astro";
 import ExerciseLog from "../components/dashboard/ExerciseLog.astro";
 import BookLog from "../components/dashboard/BookLog.astro";
 import OutputLog from "../components/dashboard/OutputLog.astro";
-
-// 型定義
-interface ExerciseItem {
-  exercise_name: string;
-  count: number;
-  weight: number;
-  date: string;
-}
-
-interface BookItem {
-  title: string;
-  pages_read: number;
-  date: string;
-}
-
-interface OutputItem {
-  type: string;
-  chars: number;
-  is_tech: boolean;
-  date: string;
-}
-
-interface ExerciseStats {
-  [key: string]: {
-    name: string;
-    totalCount: number;
-    totalWeight: number;
-    sessions: number;
-    lastDate: string | null;
-  };
-}
-
-interface BookStats {
-  [key: string]: {
-    title: string;
-    totalPages: number;
-    sessions: number;
-    lastDate: string | null;
-  };
-}
-
-interface OutputStats {
-  [key: string]: {
-    type: string;
-    totalChars: number;
-    sessions: number;
-    techCount: number;
-    lastDate: string | null;
-  };
-}
+import type {
+  ExerciseItem,
+  BookItem,
+  OutputItem,
+  ExerciseStats,
+  BookStats,
+  OutputStats,
+  ExerciseMaxRecords,
+} from "../types/dashboard";
 
 // 直接データベースからデータを取得
 const locals = Astro.locals;
@@ -72,33 +31,28 @@ if (DB) {
       "SELECT * FROM exercise ORDER BY date DESC LIMIT 50"
     ).all();
     exerciseData = exerciseResult.results || [];
-    console.log("筋トレデータ:", exerciseData.length, "件");
 
     // 読書データ
     const bookResult = await DB.prepare(
       "SELECT * FROM book ORDER BY date DESC LIMIT 50"
     ).all();
     bookData = bookResult.results || [];
-    console.log("読書データ:", bookData.length, "件");
 
     // アウトプットデータ
     const outputResult = await DB.prepare(
       "SELECT * FROM output ORDER BY date DESC LIMIT 50"
     ).all();
     outputData = outputResult.results || [];
-    console.log("アウトプットデータ:", outputData.length, "件");
   } catch (error) {
     console.error("データベースエラー:", error);
   }
 } else {
-  console.log("データベース接続エラー: DBが見つかりません");
+  console.error("データベース接続エラー: DBが見つかりません");
 }
 
 // 筋トレ統計の計算
 const exerciseStats: ExerciseStats = {};
-const exerciseMaxRecords: {
-  [key: string]: { maxWeight: number; maxCount: number };
-} = {};
+const exerciseMaxRecords: ExerciseMaxRecords = {};
 exerciseData.forEach((item: ExerciseItem) => {
   const exerciseName = item.exercise_name;
   if (!exerciseStats[exerciseName]) {
@@ -184,7 +138,7 @@ outputData.forEach((item: OutputItem) => {
       <p
         class="text-base text-white/90 font-light m-0 animate-fadeInUp animation-delay-200"
       >
-        日々の活動を可視化して、継続的な成長をサポート
+        定量データに基づく習慣形成ダッシュボード
       </p>
     </div>
 
@@ -206,7 +160,7 @@ outputData.forEach((item: OutputItem) => {
     <section
       class="max-w-[1400px] mx-auto mb-4 relative z-1 animate-fadeInUp animation-delay-400 w-full box-border"
     >
-      <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
+      <h2 class="text-2xl font-bold text-white mb-4 text-center drop-shadow-lg">
         📅 活動カレンダー
       </h2>
       <div
@@ -223,16 +177,10 @@ outputData.forEach((item: OutputItem) => {
     <section
       class="max-w-[1400px] mx-auto relative z-1 animate-fadeInUp animation-delay-400 mt-4"
     >
-      <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+      <div class="mb-4">
         <h2 class="text-2xl font-bold text-white m-0 drop-shadow-lg">
           📋 詳細ログ
         </h2>
-        <a
-          href="/input"
-          class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl no-underline font-semibold text-base transition-all duration-300 shadow-lg hover:-translate-y-0.5 hover:shadow-xl"
-        >
-          ＋ データを追加
-        </a>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <ExerciseLog exerciseData={exerciseData} />

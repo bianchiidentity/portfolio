@@ -7,24 +7,39 @@ export type Props = {
 const { outputData } = Astro.props;
 ---
 
-<div class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl">
-  <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-indigo-200/10">
+<div
+  class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+>
+  <div
+    class="flex justify-between items-center mb-4 pb-3 border-b-2 border-indigo-200/10"
+  >
     <h3 class="text-lg font-bold text-gray-800 m-0">✍️ アウトプットログ</h3>
-    <span class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold">{outputData.length}件</span>
+    <span
+      class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold"
+      >{outputData.length}件</span
+    >
   </div>
   <div class="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
     {
       outputData.length > 0 ? (
         outputData.slice(0, 10).map((item) => (
           <div class="flex items-center gap-3 p-3 bg-indigo-50/50 border border-indigo-200/10 rounded-lg transition-all duration-300 hover:bg-indigo-100/50 hover:translate-x-1">
-            <div class="text-xl w-9 h-9 flex items-center justify-center bg-indigo-100 rounded-lg flex-shrink-0">📝</div>
+            <div class="text-xl w-9 h-9 flex items-center justify-center bg-indigo-100 rounded-lg flex-shrink-0">
+              📝
+            </div>
             <div class="flex-1">
               <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-semibold text-gray-800">{item.title}</span>
-                <span class="text-xs text-gray-600 font-medium">{item.date}</span>
+                <span class="text-sm font-semibold text-gray-800">
+                  {item.type}
+                </span>
+                <span class="text-xs text-gray-600 font-medium">
+                  {item.date}
+                </span>
               </div>
               <div class="flex gap-4 items-center">
-                <span class="text-sm text-gray-600 font-medium">{item.chars || 0}文字</span>
+                <span class="text-sm text-gray-600 font-medium">
+                  {item.chars || 0}文字
+                </span>
               </div>
             </div>
           </div>
