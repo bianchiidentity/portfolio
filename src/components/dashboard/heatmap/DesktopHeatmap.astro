@@ -1,0 +1,416 @@
+---
+const { exerciseData, bookData, outputData } = Astro.props;
+---
+
+<div
+  class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden w-full min-w-0"
+>
+  <div class="flex justify-between items-center mb-4">
+    <span class="text-lg font-bold text-gray-800" id="desktop-activityTitle"
+      >過去1年間の活動</span
+    >
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span>少ない</span>
+      <div class="flex gap-1">
+        <div class="w-3 h-3 bg-gray-200 rounded-sm"></div>
+        <div class="w-3 h-3 bg-green-300 rounded-sm"></div>
+        <div class="w-3 h-3 bg-green-500 rounded-sm"></div>
+        <div class="w-3 h-3 bg-green-600 rounded-sm"></div>
+        <div class="w-3 h-3 bg-green-800 rounded-sm"></div>
+      </div>
+      <span>多い</span>
+    </div>
+  </div>
+  <div class="w-full">
+    <div
+      class="relative h-6 mb-2 overflow-hidden w-full flex justify-start items-center"
+      id="desktop-contributionMonths"
+    >
+    </div>
+    <div class="flex items-start justify-center w-full">
+      <div
+        id="desktop-weekdayLabels"
+        class="flex flex-col gap-[1px] mr-2 select-none text-xs text-gray-500"
+        aria-hidden="true"
+      >
+      </div>
+      <div
+        class="flex flex-row gap-[3px] overflow-hidden min-h-[140px] p-0 bg-transparent relative items-start flex-nowrap justify-center"
+        id="desktop-contributionGrid"
+      >
+      </div>
+    </div>
+    <!-- カスタムツールチップ -->
+    <div
+      id="desktop-customTooltip"
+      class="fixed bg-gray-800 text-white text-xs rounded-lg px-3 py-2 pointer-events-none opacity-0 transition-opacity duration-200 z-50 shadow-lg border border-gray-700"
+      style="display: none;"
+    >
+      <div id="desktop-tooltipContent"></div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ exerciseData, bookData, outputData }}>
+  // デスクトップ用のみ実行
+  if (window.innerWidth < 768) {
+    // モバイル幅の場合は何もしない
+  } else {
+    const grid = document.getElementById("desktop-contributionGrid");
+    const monthsContainer = document.getElementById(
+      "desktop-contributionMonths"
+    );
+
+    // コントリビューショングラフの作成
+    function createContributionGraph() {
+      if (!grid) return;
+
+      // 既存のコンテンツをクリア
+      grid.innerHTML = "";
+      if (monthsContainer) {
+        monthsContainer.innerHTML = "";
+      }
+
+      // 表示期間（日付配列）を生成（デスクトップは過去12ヶ月相当）
+      const today = new Date();
+      const endDate = new Date(today);
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth() - 13,
+        today.getDate()
+      );
+
+      // 日付を昇順でソート（過去から現在へ）
+      const allDates = [];
+      for (
+        let d = new Date(startDate);
+        d <= endDate;
+        d.setDate(d.getDate() + 1)
+      ) {
+        allDates.push(new Date(d).toISOString().split("T")[0]);
+      }
+
+      // データを日付でグループ化（詳細な活動データ）
+      const activityData = {};
+
+      // 筋トレデータ
+      (exerciseData || []).forEach((item) => {
+        const date = item.date;
+        if (!activityData[date]) {
+          activityData[date] = { exercise: 0, reading: 0, output: 0 };
+        }
+        activityData[date].exercise += 1;
+      });
+
+      // 読書データ
+      (bookData || []).forEach((item) => {
+        const date = item.date;
+        if (!activityData[date]) {
+          activityData[date] = { exercise: 0, reading: 0, output: 0 };
+        }
+        activityData[date].reading += 1;
+      });
+
+      // アウトプットデータ
+      (outputData || []).forEach((item) => {
+        const date = item.date;
+        if (!activityData[date]) {
+          activityData[date] = { exercise: 0, reading: 0, output: 0 };
+        }
+        activityData[date].output += 1;
+      });
+
+      // 週ごとにデータを整理（常に日→土の7件になるようパディング）
+      const weeks = [];
+      let currentWeek = [];
+      allDates.forEach((dateStr, idx) => {
+        const d = new Date(dateStr);
+        if (idx === 0) {
+          // 最初の週：開始日が週の途中なら、前に空きを詰めて7件に揃える
+          const weekDay = d.getDay(); // 0:日〜6:土
+          for (let i = 0; i < weekDay; i++) {
+            currentWeek.push(null);
+          }
+        }
+        currentWeek.push(dateStr);
+        if (currentWeek.length === 7) {
+          weeks.push(currentWeek);
+          currentWeek = [];
+        }
+      });
+      if (currentWeek.length > 0) {
+        // 最後の週：末尾に空きを詰めて7件に
+        while (currentWeek.length < 7) currentWeek.push(null);
+        weeks.push(currentWeek);
+      }
+
+      // 可視列数を算出（列幅: 16px + gap 3px = 19px）
+      const columnWidth = 19;
+      const totalWeeks = Math.ceil(allDates.length / 7);
+      // grid幅が未レイアウトの場合へのフォールバックを用意
+      const gridWidth =
+        grid.clientWidth ||
+        grid.parentElement?.clientWidth ||
+        window.innerWidth - 48;
+      const visibleWeeks = totalWeeks; // デスクトップは全期間
+      const sliceStart = Math.max(0, totalWeeks - visibleWeeks);
+
+      // 月のラベル（各月の「1日」を含む週の列の真上に表示）。可視領域に補正
+      const monthLabels = [];
+      // 月曜始まりに合わせ、列の算出も月曜起点のインデックスで行う
+      // dayIndex: 0..N-1（日付の連番、日曜起点）
+      // weekIndexMonStart: (日曜=0 を 月曜=0 に補正) → Math.floor((dayIndex + 6) / 7)
+      allDates.forEach((dateStr, dayIndex) => {
+        const d = new Date(dateStr);
+        if (d.getDate() === 1) {
+          const weekIndexMonStart = Math.floor((dayIndex + 6) / 7);
+          const idx = weekIndexMonStart - sliceStart;
+          if (idx >= 0 && idx < visibleWeeks) {
+            const monthText = d.toLocaleDateString("ja-JP", { month: "short" });
+            monthLabels.push({ month: monthText, index: idx });
+          }
+        }
+      });
+
+      // 週ごとにグリッドを作成（可視領域のみ）
+      weeks.slice(sliceStart).forEach((week) => {
+        const weekElement = document.createElement("div");
+        weekElement.className =
+          "flex flex-col gap-[1px] min-h-4 items-center justify-start flex-shrink-0 box-border";
+
+        // 月曜始まりに並べ替え（Mon..Sun）
+        const order = [1, 2, 3, 4, 5, 6, 0];
+        order.forEach((dayIndex) => {
+          const date = week[dayIndex];
+          const dayElement = document.createElement("div");
+          dayElement.className =
+            "w-4 h-4 rounded-sm border border-black/10 bg-gray-200 transition-all duration-200 flex-shrink-0 shadow-sm block min-w-4 min-h-4 box-border hover:scale-120 hover:z-10";
+          if (!date) {
+            // パディングセル
+            dayElement.className += " bg-transparent border-transparent";
+            weekElement.appendChild(dayElement);
+            return;
+          }
+
+          const activity = activityData[date] || {
+            exercise: 0,
+            reading: 0,
+            output: 0,
+          };
+          const totalActivity =
+            activity.exercise + activity.reading + activity.output;
+
+          // 活動レベルに基づいてクラスを設定
+          if (totalActivity === 0) {
+            dayElement.className += " bg-gray-200 border-gray-300";
+          } else if (totalActivity === 1) {
+            dayElement.className += " bg-green-300 border-green-300";
+          } else if (totalActivity === 2) {
+            dayElement.className += " bg-green-500 border-green-500";
+          } else if (totalActivity === 3) {
+            dayElement.className += " bg-green-600 border-green-600";
+          } else {
+            dayElement.className += " bg-green-800 border-green-800";
+          }
+
+          // カスタムツールチップのデータを設定
+          dayElement.dataset.date = date;
+          dayElement.dataset.exercise = activity.exercise;
+          dayElement.dataset.reading = activity.reading;
+          dayElement.dataset.output = activity.output;
+
+          weekElement.appendChild(dayElement);
+        });
+
+        grid.appendChild(weekElement);
+      });
+
+      // グリッド生成後に月ラベルを正確に配置
+      if (monthsContainer) {
+        monthsContainer.innerHTML = "";
+        // 月ラベルの原点は monthsContainer の左端なので、そこを基準に算出する
+        const monthsRect = monthsContainer.getBoundingClientRect();
+        monthLabels.forEach((label) => {
+          const colEl = grid.children[label.index];
+          if (!(colEl instanceof HTMLElement)) return;
+          const rect = colEl.getBoundingClientRect();
+          const center = rect.left - monthsRect.left + rect.width / 2;
+          const el = document.createElement("div");
+          el.className =
+            "text-xs text-gray-500 absolute top-0 whitespace-nowrap px-1 pointer-events-none select-none";
+          el.style.position = "absolute";
+          el.style.transform = "translateX(-50%)";
+          el.style.left = `${center}px`;
+          el.textContent = label.month;
+          monthsContainer.appendChild(el);
+        });
+      }
+    }
+
+    // 左側の曜日ラベル（「月・水・金」を表示）
+    function renderWeekdayLabels() {
+      const labelsRoot = document.getElementById("desktop-weekdayLabels");
+      if (!labelsRoot) return;
+      labelsRoot.innerHTML = "";
+      const names = ["月", "", "水", "", "金", "", ""]; // 月水金のみ表示
+      names.forEach((name) => {
+        const el = document.createElement("div");
+        el.className = "w-6 h-4 leading-4 text-right pr-1";
+        el.textContent = name;
+        labelsRoot.appendChild(el);
+      });
+    }
+
+    // ツールチップの制御
+    function setupTooltip() {
+      const DEBUG = false; // 必要に応じて true に
+      const tooltip = document.getElementById("desktop-customTooltip");
+      const tooltipContent = document.getElementById("desktop-tooltipContent");
+      const gridRoot = document.getElementById("desktop-contributionGrid");
+      if (!tooltip || !tooltipContent || !gridRoot) {
+        if (DEBUG) console.log("[heatmap] tooltip/grid not found");
+        return;
+      }
+      // 祖先の backdrop-blur/filter によるクリッピングを回避するため、body 直下へ移動
+      try {
+        if (tooltip.parentElement !== document.body) {
+          document.body.appendChild(tooltip);
+        }
+      } catch (e) {
+        // ignore
+      }
+      tooltip.style.position = "fixed";
+      tooltip.style.zIndex = "9999";
+      tooltip.style.pointerEvents = "none";
+      let hideTimeoutId = null;
+      let activeCell = null;
+
+      function positionTooltip(event) {
+        // カーソル位置にピッタリ表示
+        tooltip.style.display = "block";
+        const rect = tooltip.getBoundingClientRect();
+        let left = event.clientX;
+        let top = event.clientY;
+
+        const maxLeft = window.innerWidth - rect.width - 2;
+        const maxTop = window.innerHeight - rect.height - 2;
+        if (left < 2) left = 2;
+        if (left > maxLeft) left = maxLeft;
+        if (top < 2) top = 2;
+        if (top > maxTop) top = maxTop;
+
+        tooltip.style.left = left + "px";
+        tooltip.style.top = top + "px";
+        tooltip.style.opacity = "1";
+      }
+
+      if (!gridRoot) return;
+
+      // マウスオーバー（セルに入った時）: pointer と mouse の両方でハンドリング
+      const overHandler = function (e) {
+        const target = e.target;
+        if (
+          target &&
+          target.classList &&
+          target.classList.contains("w-4") &&
+          target.classList.contains("h-4")
+        ) {
+          const date = target.dataset.date;
+          const exercise = target.dataset.exercise;
+          const reading = target.dataset.reading;
+          const output = target.dataset.output;
+
+          if (date) {
+            activeCell = target;
+            if (hideTimeoutId) {
+              clearTimeout(hideTimeoutId);
+              hideTimeoutId = null;
+            }
+
+            tooltipContent.innerHTML = `
+              <div class="font-semibold mb-1">${date}</div>
+              <div>筋トレ: ${exercise}回</div>
+              <div>読書: ${reading}回</div>
+              <div>アウトプット: ${output}回</div>
+            `;
+
+            positionTooltip(e);
+            if (DEBUG)
+              console.log("[heatmap] show tooltip", {
+                date,
+                exercise,
+                reading,
+                output,
+              });
+          }
+        }
+      };
+      gridRoot.addEventListener("pointerover", overHandler);
+      gridRoot.addEventListener("mouseover", overHandler);
+
+      // セル上での移動で位置追従
+      const moveHandler = function (e) {
+        if (activeCell) {
+          positionTooltip(e);
+        }
+      };
+      gridRoot.addEventListener("pointermove", moveHandler, { passive: true });
+      gridRoot.addEventListener("mousemove", moveHandler, { passive: true });
+
+      // マウスアウト（グリッド内でセルから離れた時）
+      gridRoot.addEventListener("pointerout", function (e) {
+        const target = e.target;
+        if (
+          target &&
+          target.classList &&
+          target.classList.contains("w-4") &&
+          target.classList.contains("h-4")
+        ) {
+          const related = e.relatedTarget;
+          if (
+            related &&
+            gridRoot.contains(related) &&
+            related.classList &&
+            related.classList.contains("w-4") &&
+            related.classList.contains("h-4")
+          ) {
+            return;
+          }
+          hideTimeoutId = setTimeout(() => {
+            tooltip.style.opacity = "0";
+            setTimeout(() => {
+              tooltip.style.display = "none";
+            }, 150);
+          }, 60);
+          activeCell = null;
+          if (DEBUG) console.log("[heatmap] hide tooltip");
+        }
+      });
+    }
+
+    // DOMが読み込まれてからグラフを作成
+    function init() {
+      if (window.innerWidth < 768) return; // デスクトップのみ
+      renderWeekdayLabels();
+      createContributionGraph();
+      setupTooltip();
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+    if (document.readyState !== "loading") {
+      init();
+    }
+
+    // ウィンドウサイズの変更を監視してヒートマップを再描画（デスクトップのみ）
+    let resizeTimeout;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(function () {
+        if (window.innerWidth >= 768) {
+          renderWeekdayLabels();
+          createContributionGraph();
+        }
+      }, 250);
+    });
+  }
+</script>

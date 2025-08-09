@@ -7,10 +7,6 @@ import ExerciseLog from "../components/dashboard/ExerciseLog.astro";
 import BookLog from "../components/dashboard/BookLog.astro";
 import OutputLog from "../components/dashboard/OutputLog.astro";
 import type {
-  ExerciseItem,
-  BookItem,
-  OutputItem,
-  ExerciseStats,
   BookStats,
   OutputStats,
   ExerciseMaxRecords,
@@ -23,101 +19,114 @@ const DB = (locals as any)?.runtime?.env?.DB;
 let exerciseData = [];
 let bookData = [];
 let outputData = [];
+let trainingDays: number = 0;
+let exerciseTotalCounts: { [key: string]: number } = {};
+let exerciseMaxRecords: ExerciseMaxRecords = {};
+let bookStats: BookStats = {};
+let outputStats: OutputStats = {};
+let bookDays = 0;
+let bookTotalPages = 0;
+let outputDays = 0;
+let outputTotalChars = 0;
+let outputArticlesCount = 0;
 
 if (DB) {
   try {
-    // 筋トレデータ
+    // 筋トレデータ（最新50件のみ表示用）
     const exerciseResult = await DB.prepare(
       "SELECT * FROM exercise ORDER BY date DESC LIMIT 50"
     ).all();
     exerciseData = exerciseResult.results || [];
 
-    // 読書データ
+    // ジムに行った日数（ユニークな日付数）
+    const trainingDaysResult = await DB.prepare(
+      "SELECT COUNT(DISTINCT date) AS training_days FROM exercise"
+    ).first();
+    trainingDays = (trainingDaysResult as any)?.training_days ?? 0;
+
+    // 各種トレーニングの総回数（全期間）
+    const totalsResult = await DB.prepare(
+      "SELECT exercise_name, SUM(count) AS total_count FROM exercise GROUP BY exercise_name"
+    ).all();
+    (totalsResult.results || []).forEach((row: any) => {
+      exerciseTotalCounts[row.exercise_name] = row.total_count ?? 0;
+    });
+
+    // 各種トレーニングの最大重量・最大回数（全期間）
+    const maxResult = await DB.prepare(
+      "SELECT exercise_name, MAX(weight) AS max_weight, MAX(count) AS max_count FROM exercise GROUP BY exercise_name"
+    ).all();
+    (maxResult.results || []).forEach((row: any) => {
+      exerciseMaxRecords[row.exercise_name] = {
+        maxWeight: row.max_weight ?? 0,
+        maxCount: row.max_count ?? 0,
+      };
+    });
+
+    // 読書ログ（表示用）
     const bookResult = await DB.prepare(
       "SELECT * FROM book ORDER BY date DESC LIMIT 50"
     ).all();
     bookData = bookResult.results || [];
 
-    // アウトプットデータ
+    // 読書集計（全期間）
+    const bookGrouped = await DB.prepare(
+      "SELECT title, SUM(pages_read) AS total_pages, COUNT(*) AS sessions, MAX(date) AS last_date FROM book GROUP BY title"
+    ).all();
+    (bookGrouped.results || []).forEach((row: any) => {
+      bookStats[row.title] = {
+        title: row.title,
+        totalPages: row.total_pages ?? 0,
+        sessions: row.sessions ?? 0,
+        lastDate: row.last_date ?? null,
+      };
+    });
+    const bookDaysRow = await DB.prepare(
+      "SELECT COUNT(DISTINCT date) AS days FROM book"
+    ).first();
+    bookDays = (bookDaysRow as any)?.days ?? 0;
+    const bookTotalPagesRow = await DB.prepare(
+      "SELECT COALESCE(SUM(pages_read), 0) AS total_pages FROM book"
+    ).first();
+    bookTotalPages = (bookTotalPagesRow as any)?.total_pages ?? 0;
+
+    // アウトプットログ（表示用）
     const outputResult = await DB.prepare(
       "SELECT * FROM output ORDER BY date DESC LIMIT 50"
     ).all();
     outputData = outputResult.results || [];
+
+    // アウトプット集計（全期間）
+    const outputGrouped = await DB.prepare(
+      "SELECT type, SUM(chars) AS total_chars, COUNT(*) AS sessions, SUM(CASE WHEN is_tech THEN 1 ELSE 0 END) AS tech_count, MAX(date) AS last_date FROM output GROUP BY type"
+    ).all();
+    (outputGrouped.results || []).forEach((row: any) => {
+      outputStats[row.type] = {
+        type: row.type,
+        totalChars: row.total_chars ?? 0,
+        sessions: row.sessions ?? 0,
+        techCount: row.tech_count ?? 0,
+        lastDate: row.last_date ?? null,
+      };
+    });
+    const outputDaysRow = await DB.prepare(
+      "SELECT COUNT(DISTINCT date) AS days FROM output"
+    ).first();
+    outputDays = (outputDaysRow as any)?.days ?? 0;
+    const outputTotalCharsRow = await DB.prepare(
+      "SELECT COALESCE(SUM(chars), 0) AS total_chars FROM output"
+    ).first();
+    outputTotalChars = (outputTotalCharsRow as any)?.total_chars ?? 0;
+    const outputArticlesRow = await DB.prepare(
+      "SELECT COUNT(*) AS articles FROM output"
+    ).first();
+    outputArticlesCount = (outputArticlesRow as any)?.articles ?? 0;
   } catch (error) {
     console.error("データベースエラー:", error);
   }
 } else {
   console.error("データベース接続エラー: DBが見つかりません");
 }
-
-// 筋トレ統計の計算
-const exerciseStats: ExerciseStats = {};
-const exerciseMaxRecords: ExerciseMaxRecords = {};
-exerciseData.forEach((item: ExerciseItem) => {
-  const exerciseName = item.exercise_name;
-  if (!exerciseStats[exerciseName]) {
-    exerciseStats[exerciseName] = {
-      name: exerciseName,
-      totalCount: 0,
-      totalWeight: 0,
-      sessions: 0,
-      lastDate: null,
-    };
-  }
-  exerciseStats[exerciseName].totalCount += item.count;
-  exerciseStats[exerciseName].totalWeight += item.weight * item.count;
-  exerciseStats[exerciseName].sessions += 1;
-  exerciseStats[exerciseName].lastDate = item.date;
-
-  // 最大記録の更新
-  if (!exerciseMaxRecords[exerciseName]) {
-    exerciseMaxRecords[exerciseName] = { maxWeight: 0, maxCount: 0 };
-  }
-  if (item.weight > exerciseMaxRecords[exerciseName].maxWeight) {
-    exerciseMaxRecords[exerciseName].maxWeight = item.weight;
-  }
-  if (item.count > exerciseMaxRecords[exerciseName].maxCount) {
-    exerciseMaxRecords[exerciseName].maxCount = item.count;
-  }
-});
-
-// 読書統計の計算
-const bookStats: BookStats = {};
-bookData.forEach((item: BookItem) => {
-  const title = item.title;
-  if (!bookStats[title]) {
-    bookStats[title] = {
-      title: title,
-      totalPages: 0,
-      sessions: 0,
-      lastDate: null,
-    };
-  }
-  bookStats[title].totalPages += item.pages_read;
-  bookStats[title].sessions += 1;
-  bookStats[title].lastDate = item.date;
-});
-
-// アウトプット統計の計算
-const outputStats: OutputStats = {};
-outputData.forEach((item: OutputItem) => {
-  const type = item.type;
-  if (!outputStats[type]) {
-    outputStats[type] = {
-      type: type,
-      totalChars: 0,
-      sessions: 0,
-      techCount: 0,
-      lastDate: null,
-    };
-  }
-  outputStats[type].totalChars += item.chars;
-  outputStats[type].sessions += 1;
-  if (item.is_tech) {
-    outputStats[type].techCount += 1;
-  }
-  outputStats[type].lastDate = item.date;
-});
 ---
 
 <Layout>
@@ -146,12 +155,15 @@ outputData.forEach((item: OutputItem) => {
       class="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-[1400px] w-full mx-auto mb-4 relative z-1 animate-fadeInUp animation-delay-300 min-h-[60vh]"
     >
       <ActivitySummary
-        exerciseData={exerciseData}
-        bookData={bookData}
-        outputData={outputData}
         exerciseMaxRecords={exerciseMaxRecords}
         bookStats={bookStats}
-        outputStats={outputStats}
+        trainingDays={trainingDays}
+        exerciseTotalCounts={exerciseTotalCounts}
+        bookDays={bookDays}
+        bookTotalPages={bookTotalPages}
+        outputDays={outputDays}
+        outputTotalChars={outputTotalChars}
+        outputArticlesCount={outputArticlesCount}
       />
 
       <ActivityCharts exerciseData={exerciseData} bookData={bookData} />

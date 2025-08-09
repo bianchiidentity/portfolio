@@ -1,36 +1,31 @@
 ---
 // 活動サマリーコンポーネント
 export type Props = {
-  exerciseData: any[];
-  bookData: any[];
-  outputData: any[];
   exerciseMaxRecords: any;
   bookStats: any;
-  outputStats: any;
+  trainingDays: number; // DB集計済みのジムに行った日数
+  exerciseTotalCounts: { [key: string]: number }; // DB集計済み：各種トレーニング総回数
+  bookDays: number;
+  bookTotalPages: number;
+  outputDays: number;
+  outputTotalChars: number;
+  outputArticlesCount: number;
 };
 
 const {
-  exerciseData,
-  bookData,
-  outputData,
   exerciseMaxRecords,
   bookStats,
-  outputStats,
+  trainingDays,
+  exerciseTotalCounts,
+  bookDays,
+  bookTotalPages,
+  outputDays,
+  outputTotalChars,
+  outputArticlesCount,
 } = Astro.props;
 
-// ジムに行った回数（ユニークな日付数）を計算
-const uniqueGymDates = new Set(exerciseData.map((item) => (item as any).date));
-const gymVisitCount = uniqueGymDates.size;
-
-// 各エクササイズの総回数を計算
-const exerciseTotalCounts: { [key: string]: number } = {};
-exerciseData.forEach((item) => {
-  const exerciseName = (item as any).exercise_name;
-  if (!exerciseTotalCounts[exerciseName]) {
-    exerciseTotalCounts[exerciseName] = 0;
-  }
-  exerciseTotalCounts[exerciseName] += (item as any).count || 0;
-});
+// ジムに行った回数（DBでCOUNT(DISTINCT date)した結果を使用）
+const gymVisitCount = trainingDays ?? 0;
 ---
 
 <section
@@ -90,7 +85,7 @@ exerciseData.forEach((item) => {
           <div class="flex justify-between items-center">
             <span class="text-sm text-gray-600 font-medium">合計日数</span>
             <span class="text-base text-gray-800 font-semibold"
-              >{bookData.length}日</span
+              >{bookDays}日</span
             >
           </div>
           <div class="flex justify-between items-center">
@@ -102,12 +97,7 @@ exerciseData.forEach((item) => {
           <div class="flex justify-between items-center">
             <span class="text-sm text-gray-600 font-medium">総ページ</span>
             <span class="text-base text-gray-800 font-semibold"
-              >{
-                bookData.reduce(
-                  (sum, item) => sum + ((item as any).pages_read || 0),
-                  0
-                )
-              }ページ</span
+              >{bookTotalPages}ページ</span
             >
           </div>
         </div>
@@ -128,24 +118,19 @@ exerciseData.forEach((item) => {
           <div class="flex justify-between items-center">
             <span class="text-sm text-gray-600 font-medium">合計日数</span>
             <span class="text-base text-gray-800 font-semibold"
-              >{outputData.length}日</span
+              >{outputDays}日</span
             >
           </div>
           <div class="flex justify-between items-center">
             <span class="text-sm text-gray-600 font-medium">合計記事数</span>
             <span class="text-base text-gray-800 font-semibold"
-              >{Object.keys(outputStats).length}記事</span
+              >{outputArticlesCount}記事</span
             >
           </div>
           <div class="flex justify-between items-center">
             <span class="text-sm text-gray-600 font-medium">総文字数</span>
             <span class="text-base text-gray-800 font-semibold"
-              >{
-                outputData.reduce(
-                  (sum, item) => sum + ((item as any).chars || 0),
-                  0
-                )
-              }文字</span
+              >{outputTotalChars}文字</span
             >
           </div>
         </div>
