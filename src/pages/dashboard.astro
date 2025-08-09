@@ -32,19 +32,29 @@ let outputArticlesCount = 0;
 
 if (DB) {
   try {
-    // 筋トレデータ（最新50件のみ表示用）
+    // ヒートマップの対象期間（過去13ヶ月分）をサーバー側でも制限
+    const formatDateYYYYMMDD = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    };
+    const startDateObj = new Date();
+    startDateObj.setMonth(startDateObj.getMonth() - 13);
+    const startDateStr = formatDateYYYYMMDD(startDateObj);
+
     const exerciseResult = await DB.prepare(
-      "SELECT * FROM exercise ORDER BY date DESC LIMIT 50"
-    ).all();
+      "SELECT * FROM exercise WHERE date >= ? ORDER BY date DESC"
+    )
+      .bind(startDateStr)
+      .all();
     exerciseData = exerciseResult.results || [];
 
-    // ジムに行った日数（ユニークな日付数）
     const trainingDaysResult = await DB.prepare(
       "SELECT COUNT(DISTINCT date) AS training_days FROM exercise"
     ).first();
     trainingDays = (trainingDaysResult as any)?.training_days ?? 0;
 
-    // 各種トレーニングの総回数（全期間）
     const totalsResult = await DB.prepare(
       "SELECT exercise_name, SUM(count) AS total_count FROM exercise GROUP BY exercise_name"
     ).all();
@@ -52,7 +62,6 @@ if (DB) {
       exerciseTotalCounts[row.exercise_name] = row.total_count ?? 0;
     });
 
-    // 各種トレーニングの最大重量・最大回数（全期間）
     const maxResult = await DB.prepare(
       "SELECT exercise_name, MAX(weight) AS max_weight, MAX(count) AS max_count FROM exercise GROUP BY exercise_name"
     ).all();
@@ -63,13 +72,13 @@ if (DB) {
       };
     });
 
-    // 読書ログ（表示用）
     const bookResult = await DB.prepare(
-      "SELECT * FROM book ORDER BY date DESC LIMIT 50"
-    ).all();
+      "SELECT * FROM book WHERE date >= ? ORDER BY date DESC"
+    )
+      .bind(startDateStr)
+      .all();
     bookData = bookResult.results || [];
 
-    // 読書集計（全期間）
     const bookGrouped = await DB.prepare(
       "SELECT title, SUM(pages_read) AS total_pages, COUNT(*) AS sessions, MAX(date) AS last_date FROM book GROUP BY title"
     ).all();
@@ -90,13 +99,13 @@ if (DB) {
     ).first();
     bookTotalPages = (bookTotalPagesRow as any)?.total_pages ?? 0;
 
-    // アウトプットログ（表示用）
     const outputResult = await DB.prepare(
-      "SELECT * FROM output ORDER BY date DESC LIMIT 50"
-    ).all();
+      "SELECT * FROM output WHERE date >= ? ORDER BY date DESC"
+    )
+      .bind(startDateStr)
+      .all();
     outputData = outputResult.results || [];
 
-    // アウトプット集計（全期間）
     const outputGrouped = await DB.prepare(
       "SELECT type, SUM(chars) AS total_chars, COUNT(*) AS sessions, SUM(CASE WHEN is_tech THEN 1 ELSE 0 END) AS tech_count, MAX(date) AS last_date FROM output GROUP BY type"
     ).all();
