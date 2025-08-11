@@ -108,8 +108,8 @@ const { exerciseData, bookData, outputData } = Astro.props;
       allDates.forEach((dateStr, idx) => {
         const d = new Date(dateStr);
         if (idx === 0) {
-          const weekDay = d.getDay();
-          for (let i = 0; i < weekDay; i++) currentWeek.push(null);
+          const weekDayMonStart = (d.getDay() + 6) % 7; // 0:月〜6:日
+          for (let i = 0; i < weekDayMonStart; i++) currentWeek.push(null);
         }
         currentWeek.push(dateStr);
         if (currentWeek.length === 7) {
@@ -128,7 +128,6 @@ const { exerciseData, bookData, outputData } = Astro.props;
       const sliceStart = 0;
 
       const monthLabels = [];
-      // 月曜始まりに合わせて、列インデックスも月曜起点に補正
       allDates.forEach((dateStr, dayIndex) => {
         const d = new Date(dateStr);
         if (d.getDate() === 1) {
@@ -148,8 +147,7 @@ const { exerciseData, bookData, outputData } = Astro.props;
         // 右端まで詰めるため、最後の列は gap を考慮して位置合わせ
         if (weekIdx === visibleWeeks - 1) weekElement.style.marginRight = "0";
 
-        // 月曜始まりに並べ替え
-        const order = [1, 2, 3, 4, 5, 6, 0];
+        const order = [0, 1, 2, 3, 4, 5, 6];
         order.forEach((dayIndex) => {
           const date = week[dayIndex];
           const dayElement = document.createElement("div");

@@ -120,15 +120,13 @@ const { exerciseData, bookData, outputData } = Astro.props;
         activityData[date].output += 1;
       });
 
-      // 週ごとにデータを整理（常に日→土の7件になるようパディング）
       const weeks = [];
       let currentWeek = [];
       allDates.forEach((dateStr, idx) => {
         const d = new Date(dateStr);
         if (idx === 0) {
-          // 最初の週：開始日が週の途中なら、前に空きを詰めて7件に揃える
-          const weekDay = d.getDay(); // 0:日〜6:土
-          for (let i = 0; i < weekDay; i++) {
+          const weekDayMonStart = (d.getDay() + 6) % 7; // 0:月〜6:日
+          for (let i = 0; i < weekDayMonStart; i++) {
             currentWeek.push(null);
           }
         }
@@ -139,7 +137,6 @@ const { exerciseData, bookData, outputData } = Astro.props;
         }
       });
       if (currentWeek.length > 0) {
-        // 最後の週：末尾に空きを詰めて7件に
         while (currentWeek.length < 7) currentWeek.push(null);
         weeks.push(currentWeek);
       }
@@ -177,9 +174,8 @@ const { exerciseData, bookData, outputData } = Astro.props;
         const weekElement = document.createElement("div");
         weekElement.className =
           "flex flex-col gap-[1px] min-h-4 items-center justify-start flex-shrink-0 box-border";
-
-        // 月曜始まりに並べ替え（Mon..Sun）
-        const order = [1, 2, 3, 4, 5, 6, 0];
+        // 週データは月曜起点で整列済み
+        const order = [0, 1, 2, 3, 4, 5, 6];
         order.forEach((dayIndex) => {
           const date = week[dayIndex];
           const dayElement = document.createElement("div");
