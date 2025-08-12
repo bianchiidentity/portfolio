@@ -23,6 +23,10 @@ CREATE TABLE IF NOT EXISTS book (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL,
     title TEXT NOT NULL,
+    book_url TEXT,
+    comment TEXT,
+    source_url TEXT,
+    source_name TEXT,
     pages_read INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -61,17 +65,41 @@ VALUES ('2025-01-20', 'ベンチプレス', 3, 30),
     ('2025-01-24', 'デッドリフト', 4, 40);
 
 INSERT INTO
-    book (date, title, pages_read)
-VALUES ('2025-01-20', 'React実践入門', 50),
+    book (
+        date,
+        title,
+        pages_read,
+        book_url,
+        comment,
+        source_url,
+        source_name
+    )
+VALUES (
+        '2025-01-20',
+        'React実践入門',
+        50,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    ),
     (
         '2025-01-22',
         'TypeScript完全ガイド',
-        30
+        30,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         '2025-01-24',
         'Next.jsアプリケーション開発',
-        80
+        80,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     );
 
 INSERT INTO

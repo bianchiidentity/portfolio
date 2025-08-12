@@ -5,27 +5,104 @@ export type Props = {
 };
 
 const { bookData } = Astro.props;
+
+const getThumbnailForUrl = (url?: string | null) => {
+  if (!url) return null;
+  try {
+    // data URLは非対応
+    if (url.startsWith("data:")) return null;
+    const u = new URL(url);
+    // Google画像検索のリダイレクトURLから本来のURLを抽出
+    if (u.hostname.includes("google.") && u.pathname === "/url") {
+      const original = u.searchParams.get("url");
+      if (original) {
+        return `https://s.wordpress.com/mshots/v1/${encodeURIComponent(original)}?w=96&h=96`;
+      }
+    }
+    // 直接画像ならそのまま
+    if (/\.(png|jpe?g|webp|gif|svg)$/i.test(u.pathname)) {
+      return url;
+    }
+    // 通常のWebページはスクリーンショットを利用
+    return `https://s.wordpress.com/mshots/v1/${encodeURIComponent(url)}?w=96&h=96`;
+  } catch {
+    return null;
+  }
+};
 ---
 
-<div class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl">
-  <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-indigo-200/10">
+<div
+  class="bg-white/95 rounded-xl p-4 shadow-lg backdrop-blur-sm border border-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+>
+  <div
+    class="flex justify-between items-center mb-4 pb-3 border-b-2 border-indigo-200/10"
+  >
     <h3 class="text-lg font-bold text-gray-800 m-0">📚 読書ログ</h3>
-    <span class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold">{bookData.length}件</span>
+    <span
+      class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold"
+      >{bookData.length}件</span
+    >
   </div>
   <div class="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
     {
       bookData.length > 0 ? (
         bookData.slice(0, 10).map((item) => (
           <div class="flex items-center gap-3 p-3 bg-indigo-50/50 border border-indigo-200/10 rounded-lg transition-all duration-300 hover:bg-indigo-100/50 hover:translate-x-1">
-            <div class="text-xl w-9 h-9 flex items-center justify-center bg-indigo-100 rounded-lg flex-shrink-0">📖</div>
+            <div class="text-xl w-9 h-9 flex items-center justify-center bg-indigo-100 rounded-lg flex-shrink-0 overflow-hidden">
+              {item.book_url ? (
+                <img
+                  src={
+                    getThumbnailForUrl(item.book_url) ||
+                    `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(item.book_url)}`
+                  }
+                  alt="book image"
+                  width="48"
+                  height="48"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <span>📖</span>
+              )}
+            </div>
             <div class="flex-1">
               <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-semibold text-gray-800">{item.title}</span>
-                <span class="text-xs text-gray-600 font-medium">{item.date}</span>
+                <span class="text-sm font-semibold text-gray-800">
+                  {item.title}
+                </span>
+                <span class="text-xs text-gray-600 font-medium">
+                  {item.date}
+                </span>
               </div>
               <div class="flex gap-4 items-center">
-                <span class="text-sm text-gray-600 font-medium">{item.pages_read || 0}ページ</span>
+                <span class="text-sm text-gray-600 font-medium">
+                  {item.pages_read || 0}ページ
+                </span>
+                {item.comment && (
+                  <span class="text-xs text-gray-500 truncate max-w-[50%]">
+                    “{item.comment}”
+                  </span>
+                )}
               </div>
+              {(item.source_name || item.source_url) && (
+                <div class="mt-1 text-[10px] text-gray-500">
+                  引用:{" "}
+                  {item.source_name ? <span>{item.source_name}</span> : null}
+                  {item.source_url && (
+                    <>
+                      {item.source_name ? " / " : null}
+                      <a
+                        href={item.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-gray-500 underline"
+                      >
+                        {item.source_url}
+                      </a>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))

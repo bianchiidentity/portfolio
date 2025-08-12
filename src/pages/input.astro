@@ -111,15 +111,46 @@ if (Astro.request.method === "POST") {
               const pages_read = parseInt(
                 (formData.get("pages_read") as string) || "0"
               );
+              const book_url = (formData.get("book_url") as string) || null;
+              const comment = (formData.get("comment") as string) || null;
+              const source_url = (formData.get("source_url") as string) || null;
+              const source_name =
+                (formData.get("source_name") as string) || null;
 
               if (!title) {
                 message = "タイトルは必須です";
                 messageType = "error";
               } else {
-                await DB.prepare(
-                  `INSERT INTO book (date, title, pages_read, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
-                )
-                  .bind(date, title, pages_read)
+                // スキーマ差異に強い動的INSERT
+                const colsRes = await DB.prepare(
+                  "PRAGMA table_info(book)"
+                ).all();
+                const colNames = new Set(
+                  (colsRes.results || []).map((r: any) => r.name)
+                );
+
+                const columns: string[] = [];
+                const values: any[] = [];
+
+                const pushIf = (name: string, value: any) => {
+                  if (colNames.has(name)) {
+                    columns.push(name);
+                    values.push(value);
+                  }
+                };
+
+                pushIf("date", date);
+                pushIf("title", title);
+                pushIf("pages_read", pages_read);
+                pushIf("book_url", book_url);
+                pushIf("comment", comment);
+                pushIf("source_url", source_url);
+                pushIf("source_name", source_name);
+
+                const placeholders = columns.map(() => "?").join(", ");
+                const sql = `INSERT INTO book (${columns.join(", ")}) VALUES (${placeholders})`;
+                await DB.prepare(sql)
+                  .bind(...values)
                   .run();
                 message = "読書データが正常に保存されました！";
                 messageType = "success";
@@ -175,6 +206,33 @@ if (Astro.request.method === "POST") {
     message = "エラーが発生しました";
     messageType = "error";
   }
+}
+
+// 過去に登録した本の情報（タイトルごとに最新のメタ情報を1件）
+let previousBooks: Array<{
+  title: string;
+  book_url?: string | null;
+  source_url?: string | null;
+  source_name?: string | null;
+}> = [];
+
+try {
+  const DB2 = (locals?.runtime?.env as any)?.DB;
+  if (DB2) {
+    const res = await DB2.prepare(
+      `SELECT title,
+              MAX(book_url)  AS book_url,
+              MAX(source_url) AS source_url,
+              MAX(source_name) AS source_name,
+              MAX(date) AS last_date
+         FROM book
+        GROUP BY title
+        ORDER BY last_date DESC`
+    ).all();
+    previousBooks = res.results || [];
+  }
+} catch (e) {
+  console.error("過去の本の取得エラー", e);
 }
 ---
 
@@ -328,6 +386,82 @@ if (Astro.request.method === "POST") {
             placeholder="本のタイトルを入力してください"
           />
         </div>
+        {
+          previousBooks.length > 0 && (
+            <div class="mb-4">
+              <label class="block text-gray-700 font-bold mb-2">
+                過去の本から選ぶ
+              </label>
+              <div class="flex gap-2 items-center">
+                <select
+                  id="previous_book"
+                  class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                >
+                  <option value="">選択してください</option>
+                  {previousBooks.map((b) => (
+                    <option
+                      value={b.title}
+                      data-book_url={b.book_url || ""}
+                      data-source_url={b.source_url || ""}
+                      data-source_name={b.source_name || ""}
+                    >
+                      {b.title}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  id="apply_prev_book"
+                  class="px-4 py-3 bg-indigo-500 text-white font-bold rounded-lg shadow-md hover:bg-indigo-600 transition-colors duration-200"
+                >
+                  反映
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 mt-1 m-0">
+                タイトル・画像URL・出典情報を自動入力します
+              </p>
+            </div>
+          )
+        }
+        <div class="mb-6">
+          <label for="book_url" class="block text-gray-700 font-bold mb-2"
+            >画像URL</label
+          >
+          <input
+            type="url"
+            id="book_url"
+            name="book_url"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+            placeholder="https://（画像ファイルのURL）"
+          />
+        </div>
+        <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="source_url" class="block text-gray-700 font-bold mb-2"
+              >引用URL（公式ページ）</label
+            >
+            <input
+              type="url"
+              id="source_url"
+              name="source_url"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+              placeholder="https://（公式サイトの該当ページ）"
+            />
+          </div>
+          <div>
+            <label for="source_name" class="block text-gray-700 font-bold mb-2"
+              >引用サイト名</label
+            >
+            <input
+              type="text"
+              id="source_name"
+              name="source_name"
+              maxlength="60"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+              placeholder="例）公式サイト、出版社サイトなど"
+            />
+          </div>
+        </div>
         <div class="mb-6">
           <label for="pages_read" class="block text-gray-700 font-bold mb-2"
             >読んだページ数</label
@@ -339,6 +473,19 @@ if (Astro.request.method === "POST") {
             min="0"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
             placeholder="ページ数"
+          />
+        </div>
+        <div class="mb-6">
+          <label for="comment" class="block text-gray-700 font-bold mb-2"
+            >感想（一行）</label
+          >
+          <input
+            type="text"
+            id="comment"
+            name="comment"
+            maxlength="120"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+            placeholder="印象に残ったことなどを一言"
           />
         </div>
       </div>
@@ -431,24 +578,49 @@ if (Astro.request.method === "POST") {
     const dataTypeSelect = document.getElementById("dataType");
     const dataFields = document.querySelectorAll(".data-fields");
 
+    function setDisabledForChildren(container: Element, disabled: boolean) {
+      const elements = container.querySelectorAll(
+        "input, select, textarea, button"
+      );
+      elements.forEach((el) => {
+        (
+          el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        ).disabled = disabled;
+        if (disabled) {
+          (el as any).required = false;
+        }
+      });
+    }
+
+    function updateVisibleFields(selectedType: string) {
+      dataFields.forEach((field) => {
+        const isTarget = field.id === `${selectedType}-fields`;
+        if (isTarget) {
+          (field as HTMLElement).classList.remove("hidden");
+          setDisabledForChildren(field, false);
+          // 必須制御: exerciseの種目は可視時のみ必須
+          const exerciseName = field.querySelector(
+            'select[name="exercise_name_0"]'
+          ) as HTMLSelectElement | null;
+          if (exerciseName) exerciseName.required = true;
+        } else {
+          (field as HTMLElement).classList.add("hidden");
+          setDisabledForChildren(field, true);
+        }
+      });
+    }
+
     dataTypeSelect?.addEventListener(
       "change",
       function (this: HTMLSelectElement) {
-        // すべてのフィールドを非表示
-        dataFields.forEach((field) => {
-          (field as HTMLElement).classList.add("hidden");
-        });
-
-        // 選択されたデータタイプのフィールドを表示
-        const selectedType = this.value;
-        if (selectedType) {
-          const targetField = document.getElementById(`${selectedType}-fields`);
-          if (targetField) {
-            (targetField as HTMLElement).classList.remove("hidden");
-          }
-        }
+        updateVisibleFields(this.value || "");
       }
     );
+
+    // 初期状態でも非表示フィールドを無効化
+    const initialType =
+      (dataTypeSelect as HTMLSelectElement | null)?.value || "";
+    updateVisibleFields(initialType);
 
     // 筋トレ種目の追加
     let exerciseIndex = 1;
@@ -546,7 +718,40 @@ if (Astro.request.method === "POST") {
 
       exerciseIndex = exerciseItems.length;
     };
+
+    // 過去の本を反映
+    const prevSelect = document.getElementById(
+      "previous_book"
+    ) as HTMLSelectElement | null;
+    const applyPrevBtn = document.getElementById("apply_prev_book");
+    const titleInput = document.getElementById(
+      "title"
+    ) as HTMLInputElement | null;
+    const bookUrlInput = document.getElementById(
+      "book_url"
+    ) as HTMLInputElement | null;
+    const sourceUrlInput = document.getElementById(
+      "source_url"
+    ) as HTMLInputElement | null;
+    const sourceNameInput = document.getElementById(
+      "source_name"
+    ) as HTMLInputElement | null;
+
+    function applyPreviousBook() {
+      if (!prevSelect) return;
+      const opt = prevSelect.selectedOptions[0];
+      if (!opt || !opt.value) return;
+      const title = opt.value;
+      const book_url = opt.getAttribute("data-book_url") || "";
+      const source_url = opt.getAttribute("data-source_url") || "";
+      const source_name = opt.getAttribute("data-source_name") || "";
+      if (titleInput) titleInput.value = title;
+      if (bookUrlInput) bookUrlInput.value = book_url;
+      if (sourceUrlInput) sourceUrlInput.value = source_url;
+      if (sourceNameInput) sourceNameInput.value = source_name;
+    }
+
+    applyPrevBtn?.addEventListener("click", applyPreviousBook);
+    prevSelect?.addEventListener("change", applyPreviousBook);
   });
 </script>
-
-

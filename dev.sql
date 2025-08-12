@@ -142,68 +142,176 @@ VALUES ('2025-01-15', 'ベンチプレス', 3, 30),
 
 -- 読書データの生成（過去1年間、ランダムな日付に）
 INSERT INTO
-    book (date, title, pages_read)
-VALUES ('2025-01-10', 'React実践入門', 25),
+    book (
+        date,
+        title,
+        pages_read,
+        book_url,
+        comment,
+        source_url,
+        source_name
+    )
+VALUES (
+        '2025-01-10',
+        'React実践入門',
+        25,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    ),
     (
         '2025-01-20',
         'TypeScript完全ガイド',
-        30
+        30,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         '2025-02-03',
         'Next.jsアプリケーション開発',
-        40
+        40,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
-    ('2025-02-14', 'GraphQL入門', 20),
+    (
+        '2025-02-14',
+        'GraphQL入門',
+        20,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    ),
     (
         '2025-02-26',
         'Docker実践ガイド',
-        35
+        35,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
-    ('2025-03-10', 'AWSクラウド設計', 45),
+    (
+        '2025-03-10',
+        'AWSクラウド設計',
+        45,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    ),
     (
         '2025-03-20',
         'セキュリティエンジニアリング',
-        30
+        30,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         '2025-04-02',
         'データベース設計入門',
-        25
+        25,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
-    ('2025-04-14', 'React実践入門', 35),
+    (
+        '2025-04-14',
+        'React実践入門',
+        35,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    ),
     (
         '2025-04-26',
         'TypeScript完全ガイド',
-        40
+        40,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         '2025-05-08',
         'Next.jsアプリケーション開発',
-        50
+        50,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
-    ('2025-05-20', 'GraphQL入門', 30),
+    (
+        '2025-05-20',
+        'GraphQL入門',
+        30,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    ),
     (
         '2025-06-01',
         'Docker実践ガイド',
-        45
+        45,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
-    ('2025-06-13', 'AWSクラウド設計', 55),
+    (
+        '2025-06-13',
+        'AWSクラウド設計',
+        55,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    ),
     (
         '2025-06-25',
         'セキュリティエンジニアリング',
-        40
+        40,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         '2025-07-07',
         'データベース設計入門',
-        35
+        35,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
-    ('2025-07-19', 'React実践入門', 45),
+    (
+        '2025-07-19',
+        'React実践入門',
+        45,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    ),
     (
         '2025-07-31',
         'TypeScript完全ガイド',
-        50
+        50,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     );
 
 -- アウトプットデータの生成（過去1年間、ランダムな日付に）

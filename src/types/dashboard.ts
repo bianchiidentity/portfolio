@@ -11,6 +11,10 @@ export type BookItem = {
   title: string;
   pages_read: number;
   date: string;
+  book_url?: string | null;
+  comment?: string | null;
+  source_url?: string | null;
+  source_name?: string | null;
 };
 
 export type OutputItem = {
