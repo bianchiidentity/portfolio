@@ -2,12 +2,11 @@
 import MobileHeroSection from "./hero/MobileHeroSection.astro";
 import DesktopHeroSection from "./hero/DesktopHeroSection.astro";
 
-// ヒーローセクションのコンポーネント化
 type Props = {
   images?: string[];
 };
 
-const { images = ["/mv.jpg", "/mv3.png"] } = Astro.props;
+const { images = ["/mv.jpg", "/mv1.jpg", "/mv2.jpg"] } = Astro.props;
 ---
 
 <main class="relative w-screen min-w-0 bg-white box-border">

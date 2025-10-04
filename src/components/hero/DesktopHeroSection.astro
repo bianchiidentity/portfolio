@@ -36,9 +36,10 @@ const { images = [] } = Astro.props;
     {
       images.map((image, index) => (
         <img
-          class={`absolute top-0 left-0 w-full h-full object-cover object-left-center transition-opacity duration-1000 z-1 pointer-events-none ${index === 0 ? "opacity-100" : "opacity-0"}`}
+          class={`desktop-hero-image absolute top-0 left-0 w-full h-full object-cover object-center transition-opacity duration-1000 z-1 pointer-events-none ${index === 0 ? "opacity-100" : "opacity-0"}`}
           src={image}
           alt={`自画像${index + 1}`}
+          style={index === 0 ? "opacity: 1;" : "opacity: 0;"}
         />
       ))
     }
@@ -66,24 +67,50 @@ const { images = [] } = Astro.props;
 </main>
 
 <script>
-  type ImageSlider = {
-    idx: number;
-    images: NodeListOf<Element>;
-    interval: number;
-  };
+  document.addEventListener("DOMContentLoaded", () => {
+    const images = document.querySelectorAll(".desktop-hero-image");
+    let currentIndex = 0;
+    const interval = 3000;
 
-  const slider: ImageSlider = {
-    idx: 0,
-    images: document.querySelectorAll(".hero-image"),
-    interval: 4000,
-  };
+    if (images.length > 1) {
+      // スライダー関数
+      function showNextImage() {
+        // 次のインデックスを計算
+        const nextIndex = (currentIndex + 1) % images.length;
 
-  if (slider.images.length > 1) {
-    setInterval((): void => {
-      slider.images.forEach((img, i) =>
-        img.classList.toggle("active", i === slider.idx)
-      );
-      slider.idx = (slider.idx + 1) % slider.images.length;
-    }, slider.interval);
-  }
+        // 次の画像を先に表示（必ずどれかは表示されている状態を保つ）
+        (images[nextIndex] as HTMLImageElement).style.opacity = "1";
+
+        // 現在の画像を非表示
+        (images[currentIndex] as HTMLImageElement).style.opacity = "0";
+
+        // インデックスを更新
+        currentIndex = nextIndex;
+      }
+
+      // スライダーを開始
+      setInterval(showNextImage, interval);
+    }
+  });
 </script>
+
+<style>
+  .desktop-hero-image {
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* 超ワイド画面での画像表示調整 */
+  @media (min-aspect-ratio: 21/9) {
+    .desktop-hero-image {
+      object-position: center 30%;
+    }
+  }
+
+  /* 標準ワイド画面での画像表示調整 */
+  @media (min-aspect-ratio: 16/9) and (max-aspect-ratio: 21/9) {
+    .desktop-hero-image {
+      object-position: center 20%;
+    }
+  }
+</style>
