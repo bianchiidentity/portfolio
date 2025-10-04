@@ -72,13 +72,13 @@ if (Astro.request.method === "POST") {
 
               while (true) {
                 const exercise_name = formData.get(
-                  `exercise_name_${index}`
+                  `exercise_name_${index}`,
                 ) as string;
                 const count = parseInt(
-                  (formData.get(`count_${index}`) as string) || "0"
+                  (formData.get(`count_${index}`) as string) || "0",
                 );
                 const weight = parseInt(
-                  (formData.get(`weight_${index}`) as string) || "0"
+                  (formData.get(`weight_${index}`) as string) || "0",
                 );
 
                 if (!exercise_name) {
@@ -96,7 +96,7 @@ if (Astro.request.method === "POST") {
                 // 各種目をデータベースに保存
                 for (const entry of exerciseEntries) {
                   await DB.prepare(
-                    `INSERT INTO exercise (date, exercise_name, count, weight, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
+                    `INSERT INTO exercise (date, exercise_name, count, weight, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
                   )
                     .bind(date, entry.exercise_name, entry.count, entry.weight)
                     .run();
@@ -109,7 +109,7 @@ if (Astro.request.method === "POST") {
             case "book":
               const title = formData.get("title") as string;
               const pages_read = parseInt(
-                (formData.get("pages_read") as string) || "0"
+                (formData.get("pages_read") as string) || "0",
               );
               const book_url = (formData.get("book_url") as string) || null;
               const comment = (formData.get("comment") as string) || null;
@@ -123,10 +123,10 @@ if (Astro.request.method === "POST") {
               } else {
                 // スキーマ差異に強い動的INSERT
                 const colsRes = await DB.prepare(
-                  "PRAGMA table_info(book)"
+                  "PRAGMA table_info(book)",
                 ).all();
                 const colNames = new Set(
-                  (colsRes.results || []).map((r: any) => r.name)
+                  (colsRes.results || []).map((r: any) => r.name),
                 );
 
                 const columns: string[] = [];
@@ -167,7 +167,7 @@ if (Astro.request.method === "POST") {
                 messageType = "error";
               } else {
                 await DB.prepare(
-                  `INSERT INTO output (date, type, chars, is_tech, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
+                  `INSERT INTO output (date, type, chars, is_tech, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
                 )
                   .bind(date, type, chars, is_tech ? 1 : 0)
                   .run();
@@ -178,11 +178,11 @@ if (Astro.request.method === "POST") {
 
             case "sleep":
               const hours = parseFloat(
-                (formData.get("hours") as string) || "0"
+                (formData.get("hours") as string) || "0",
               );
 
               await DB.prepare(
-                `INSERT INTO sleep (date, hours, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
+                `INSERT INTO sleep (date, hours, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
               )
                 .bind(date, hours)
                 .run();
@@ -216,9 +216,15 @@ let previousBooks: Array<{
   source_name?: string | null;
 }> = [];
 
+// 各種目の最大重量データ
+let exerciseMaxRecords: {
+  [key: string]: { maxWeight: number; maxCount: number };
+} = {};
+
 try {
   const DB2 = (locals?.runtime?.env as any)?.DB;
   if (DB2) {
+    // 過去の本の情報を取得
     const res = await DB2.prepare(
       `SELECT title,
               MAX(book_url)  AS book_url,
@@ -227,12 +233,23 @@ try {
               MAX(date) AS last_date
          FROM book
         GROUP BY title
-        ORDER BY last_date DESC`
+        ORDER BY last_date DESC`,
     ).all();
     previousBooks = res.results || [];
+
+    // 各種目の最大重量データを取得
+    const maxResult = await DB2.prepare(
+      "SELECT exercise_name, MAX(weight) AS max_weight, MAX(count) AS max_count FROM exercise GROUP BY exercise_name",
+    ).all();
+    (maxResult.results || []).forEach((row: any) => {
+      exerciseMaxRecords[row.exercise_name] = {
+        maxWeight: row.max_weight ?? 0,
+        maxCount: row.max_count ?? 0,
+      };
+    });
   }
 } catch (e) {
-  console.error("過去の本の取得エラー", e);
+  console.error("データ取得エラー", e);
 }
 ---
 
@@ -268,21 +285,34 @@ try {
       class="max-w-[800px] mx-auto bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl relative z-1"
     >
       <div class="mb-6">
-        <label for="dataType" class="block text-gray-700 font-bold mb-2"
-          >データタイプ *</label
-        >
-        <select
-          id="dataType"
-          name="dataType"
-          required
-          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-        >
-          <option value="">データタイプを選択してください</option>
-          <option value="exercise">💪 筋トレ</option>
-          <option value="book">📚 読書</option>
-          <option value="output">✍️ アウトプット</option>
-          <option value="sleep">😴 睡眠</option>
-        </select>
+        <label class="block text-gray-700 font-bold mb-4">データタイプ *</label>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            type="button"
+            class="data-type-btn px-6 py-4 border-2 border-gray-300 bg-white rounded-lg text-center font-medium transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm hover:shadow-md"
+            data-type="exercise"
+          >
+            <div class="text-2xl mb-2">💪</div>
+            <div class="text-lg font-semibold">筋トレ</div>
+          </button>
+          <button
+            type="button"
+            class="data-type-btn px-6 py-4 border-2 border-gray-300 bg-white rounded-lg text-center font-medium transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm hover:shadow-md"
+            data-type="book"
+          >
+            <div class="text-2xl mb-2">📚</div>
+            <div class="text-lg font-semibold">読書</div>
+          </button>
+          <button
+            type="button"
+            class="data-type-btn px-6 py-4 border-2 border-gray-300 bg-white rounded-lg text-center font-medium transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm hover:shadow-md"
+            data-type="output"
+          >
+            <div class="text-2xl mb-2">✍️</div>
+            <div class="text-lg font-semibold">アウトプット</div>
+          </button>
+        </div>
+        <input type="hidden" id="dataType" name="dataType" required />
       </div>
 
       <div class="mb-6">
@@ -303,12 +333,26 @@ try {
       <div id="exercise-fields" class="data-fields hidden">
         <div class="flex justify-between items-center mb-6">
           <h3 class="text-2xl font-bold text-gray-800">💪 筋トレ種目</h3>
-          <button
-            type="button"
-            id="add-exercise"
-            class="px-6 py-3 bg-indigo-500 text-white font-bold rounded-lg shadow-md hover:bg-indigo-600 transition-colors duration-200"
-            >+ 種目を追加</button
-          >
+          <div class="flex gap-3">
+            <button
+              type="button"
+              id="upper-body-template"
+              class="px-4 py-2 bg-blue-500 text-white font-medium rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-200 text-sm"
+              >🏋️ 上半身定型</button
+            >
+            <button
+              type="button"
+              id="lower-body-template"
+              class="px-4 py-2 bg-green-500 text-white font-medium rounded-lg shadow-md hover:bg-green-600 transition-colors duration-200 text-sm"
+              >🦵 下半身定型</button
+            >
+            <button
+              type="button"
+              id="add-exercise"
+              class="px-6 py-3 bg-indigo-500 text-white font-bold rounded-lg shadow-md hover:bg-indigo-600 transition-colors duration-200"
+              >+ 種目を追加</button
+            >
+          </div>
         </div>
         <div id="exercise-list">
           <div
@@ -535,25 +579,6 @@ try {
         </div>
       </div>
 
-      <!-- 睡眠フォーム -->
-      <div id="sleep-fields" class="data-fields hidden">
-        <div class="mb-6">
-          <label for="hours" class="block text-gray-700 font-bold mb-2"
-            >睡眠時間(時間)</label
-          >
-          <input
-            type="number"
-            id="hours"
-            name="hours"
-            min="0"
-            max="24"
-            step="0.5"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-            placeholder="睡眠時間"
-          />
-        </div>
-      </div>
-
       <div class="flex gap-4 justify-center">
         <button
           type="submit"
@@ -572,55 +597,76 @@ try {
   </main>
 </Layout>
 
-<script>
+<script define:vars={{ exerciseMaxRecords }}>
   // データタイプの選択に応じてフォームフィールドを表示/非表示
   document.addEventListener("DOMContentLoaded", function () {
-    const dataTypeSelect = document.getElementById("dataType");
+    const dataTypeInput = document.getElementById("dataType");
+    const dataTypeButtons = document.querySelectorAll(".data-type-btn");
     const dataFields = document.querySelectorAll(".data-fields");
 
-    function setDisabledForChildren(container: Element, disabled: boolean) {
+    function setDisabledForChildren(container, disabled) {
       const elements = container.querySelectorAll(
-        "input, select, textarea, button"
+        "input, select, textarea, button",
       );
       elements.forEach((el) => {
-        (
-          el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-        ).disabled = disabled;
+        el.disabled = disabled;
         if (disabled) {
-          (el as any).required = false;
+          el.required = false;
         }
       });
     }
 
-    function updateVisibleFields(selectedType: string) {
+    function updateVisibleFields(selectedType) {
       dataFields.forEach((field) => {
         const isTarget = field.id === `${selectedType}-fields`;
         if (isTarget) {
-          (field as HTMLElement).classList.remove("hidden");
+          field.classList.remove("hidden");
           setDisabledForChildren(field, false);
           // 必須制御: exerciseの種目は可視時のみ必須
           const exerciseName = field.querySelector(
-            'select[name="exercise_name_0"]'
-          ) as HTMLSelectElement | null;
+            'select[name="exercise_name_0"]',
+          );
           if (exerciseName) exerciseName.required = true;
         } else {
-          (field as HTMLElement).classList.add("hidden");
+          field.classList.add("hidden");
           setDisabledForChildren(field, true);
         }
       });
     }
 
-    dataTypeSelect?.addEventListener(
-      "change",
-      function (this: HTMLSelectElement) {
-        updateVisibleFields(this.value || "");
-      }
-    );
+    function selectDataType(type) {
+      // ボタンのスタイルを更新
+      dataTypeButtons.forEach((btn) => {
+        if (btn.dataset.type === type) {
+          btn.classList.remove("border-gray-300", "bg-white");
+          btn.classList.add("border-indigo-500", "bg-indigo-100");
+        } else {
+          btn.classList.remove("border-indigo-500", "bg-indigo-100");
+          btn.classList.add("border-gray-300", "bg-white");
+        }
+      });
 
-    // 初期状態でも非表示フィールドを無効化
-    const initialType =
-      (dataTypeSelect as HTMLSelectElement | null)?.value || "";
-    updateVisibleFields(initialType);
+      // 隠しフィールドに値を設定
+      if (dataTypeInput) {
+        dataTypeInput.value = type;
+      }
+
+      // フォームフィールドを更新
+      updateVisibleFields(type);
+    }
+
+    // ボタンクリックイベント
+    dataTypeButtons.forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const type = this.dataset.type;
+        if (type) {
+          selectDataType(type);
+        }
+      });
+    });
+
+    // 初期状態では何も選択されていない
+    updateVisibleFields("");
 
     // 筋トレ種目の追加
     let exerciseIndex = 1;
@@ -646,13 +692,13 @@ try {
               <option value="">種目を選択してください</option>
               ${(() => {
                 const select = document.querySelector(
-                  'select[name="exercise_name_0"]'
-                ) as HTMLSelectElement;
-                if (!select?.options) return "";
+                  'select[name="exercise_name_0"]',
+                );
+                if (!select || !select.options) return "";
                 return Array.from(select.options)
                   .map(
-                    (option: HTMLOptionElement) =>
-                      `<option value="${option.value}">${option.text}</option>`
+                    (option) =>
+                      `<option value="${option.value}">${option.text}</option>`,
                   )
                   .join("");
               })()}
@@ -689,9 +735,11 @@ try {
     }
 
     // 筋トレ種目の削除
-    (window as any).removeExercise = function (button: any) {
+    window.removeExercise = function (button) {
       const exerciseItem = button.closest(".exercise-item");
-      exerciseItem?.remove();
+      if (exerciseItem) {
+        exerciseItem.remove();
+      }
 
       // 種目番号を再計算
       const exerciseItems = document.querySelectorAll(".exercise-item");
@@ -703,13 +751,9 @@ try {
         item.setAttribute("data-index", index.toString());
 
         // name属性も更新
-        const select = item.querySelector("select") as HTMLSelectElement;
-        const countInput = item.querySelector(
-          'input[name^="count_"]'
-        ) as HTMLInputElement;
-        const weightInput = item.querySelector(
-          'input[name^="weight_"]'
-        ) as HTMLInputElement;
+        const select = item.querySelector("select");
+        const countInput = item.querySelector('input[name^="count_"]');
+        const weightInput = item.querySelector('input[name^="weight_"]');
 
         if (select) select.name = `exercise_name_${index}`;
         if (countInput) countInput.name = `count_${index}`;
@@ -719,23 +763,139 @@ try {
       exerciseIndex = exerciseItems.length;
     };
 
+    // 定型トレーニングの自動入力
+    const upperBodyTemplateBtn = document.getElementById("upper-body-template");
+    const lowerBodyTemplateBtn = document.getElementById("lower-body-template");
+
+    // 上半身定型トレーニング
+    if (upperBodyTemplateBtn) {
+      upperBodyTemplateBtn.addEventListener("click", function () {
+        // 既存の種目をクリア
+        const exerciseList = document.getElementById("exercise-list");
+        if (exerciseList) {
+          exerciseList.innerHTML = "";
+        }
+        exerciseIndex = 0;
+
+        // 上半身種目を追加
+        const upperBodyExercises = [
+          { name: "チェストプレス", count: 30, weight: 0 },
+          { name: "ペックフライ", count: 30, weight: 0 },
+          { name: "チンニング", count: 30, weight: 0 },
+          { name: "ケーブルローイング", count: 30, weight: 0 },
+        ];
+
+        upperBodyExercises.forEach((exercise, index) => {
+          const maxWeight = exerciseMaxRecords[exercise.name]?.maxWeight || 0;
+          addExerciseItem(exercise.name, exercise.count, maxWeight, index);
+        });
+      });
+    }
+
+    // 下半身定型トレーニング
+    if (lowerBodyTemplateBtn) {
+      lowerBodyTemplateBtn.addEventListener("click", function () {
+        // 既存の種目をクリア
+        const exerciseList = document.getElementById("exercise-list");
+        if (exerciseList) {
+          exerciseList.innerHTML = "";
+        }
+        exerciseIndex = 0;
+
+        // 下半身種目を追加
+        const lowerBodyExercises = [
+          { name: "レッグプレス", count: 15, weight: 0 },
+          { name: "アダクター", count: 12, weight: 0 },
+          { name: "アブダクター", count: 12, weight: 0 },
+        ];
+
+        lowerBodyExercises.forEach((exercise, index) => {
+          const maxWeight = exerciseMaxRecords[exercise.name]?.maxWeight || 0;
+          addExerciseItem(exercise.name, exercise.count, maxWeight, index);
+        });
+      });
+    }
+
+    // 種目アイテムを追加する共通関数
+    function addExerciseItem(exerciseName, count, weight, index) {
+      const exerciseList = document.getElementById("exercise-list");
+      if (!exerciseList) return;
+
+      const exerciseItem = document.createElement("div");
+      exerciseItem.className =
+        "exercise-item bg-gradient-to-br from-white/95 to-slate-50/95 border border-indigo-200/15 rounded-2xl p-6 mb-6 relative transition-all duration-300 ease-out shadow-lg backdrop-blur-sm";
+      exerciseItem.setAttribute("data-index", index.toString());
+
+      exerciseItem.innerHTML = `
+        <div class="flex justify-between items-center mb-5 pb-3 border-b-2 border-indigo-200/10">
+          <span class="font-bold text-indigo-600 text-base bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent drop-shadow-sm">種目 ${index + 1}</span>
+          <button type="button" class="bg-gradient-to-br from-red-100 to-red-200 text-red-600 border border-red-200 rounded-lg w-7 h-7 flex items-center justify-center cursor-pointer text-lg font-bold transition-all duration-300 ease-out shadow-md hover:shadow-lg" onclick="removeExercise(this)">×</button>
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-700 font-bold mb-2">種目 *</label>
+          <select name="exercise_name_${index}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200" required>
+            <option value="">種目を選択してください</option>
+            <option value="ベンチプレス" ${exerciseName === "ベンチプレス" ? "selected" : ""}>ベンチプレス</option>
+            <option value="チェストプレス" ${exerciseName === "チェストプレス" ? "selected" : ""}>チェストプレス</option>
+            <option value="ペックフライ" ${exerciseName === "ペックフライ" ? "selected" : ""}>ペックフライ</option>
+            <option value="ショルダープレス" ${exerciseName === "ショルダープレス" ? "selected" : ""}>ショルダープレス</option>
+            <option value="リアデルト" ${exerciseName === "リアデルト" ? "selected" : ""}>リアデルト</option>
+            <option value="チンニング" ${exerciseName === "チンニング" ? "selected" : ""}>チンニング</option>
+            <option value="ラットプル" ${exerciseName === "ラットプル" ? "selected" : ""}>ラットプル</option>
+            <option value="ケーブルローイング" ${exerciseName === "ケーブルローイング" ? "selected" : ""}>ケーブルローイング</option>
+            <option value="スクワット" ${exerciseName === "スクワット" ? "selected" : ""}>スクワット</option>
+            <option value="レッグプレス" ${exerciseName === "レッグプレス" ? "selected" : ""}>レッグプレス</option>
+            <option value="レッグカール" ${exerciseName === "レッグカール" ? "selected" : ""}>レッグカール</option>
+            <option value="レッグエクステンション" ${exerciseName === "レッグエクステンション" ? "selected" : ""}>レッグエクステンション</option>
+            <option value="アダクター" ${exerciseName === "アダクター" ? "selected" : ""}>アダクター</option>
+            <option value="アブダクター" ${exerciseName === "アブダクター" ? "selected" : ""}>アブダクター</option>
+            <option value="ダンベルカール" ${exerciseName === "ダンベルカール" ? "selected" : ""}>ダンベルカール</option>
+            <option value="デッドリフト" ${exerciseName === "デッドリフト" ? "selected" : ""}>デッドリフト</option>
+            <option value="ネックエクステンション" ${exerciseName === "ネックエクステンション" ? "selected" : ""}>ネックエクステンション</option>
+            <option value="トルソーローテーション" ${exerciseName === "トルソーローテーション" ? "selected" : ""}>トルソーローテーション</option>
+            <option value="アブドミナルクランチ" ${exerciseName === "アブドミナルクランチ" ? "selected" : ""}>アブドミナルクランチ</option>
+            <option value="パワーミル" ${exerciseName === "パワーミル" ? "selected" : ""}>パワーミル</option>
+            <option value="トレッドミル" ${exerciseName === "トレッドミル" ? "selected" : ""}>トレッドミル</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">回数</label>
+            <input
+              type="number"
+              name="count_${index}"
+              min="0"
+              value="${count}"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+              placeholder="回数"
+            />
+          </div>
+          <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">重量(kg)</label>
+            <input
+              type="number"
+              name="weight_${index}"
+              min="0"
+              step="0.5"
+              value="${weight}"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+              placeholder="重量"
+            />
+          </div>
+        </div>
+      `;
+
+      exerciseList.appendChild(exerciseItem);
+      exerciseIndex = index + 1;
+    }
+
     // 過去の本を反映
-    const prevSelect = document.getElementById(
-      "previous_book"
-    ) as HTMLSelectElement | null;
+    const prevSelect = document.getElementById("previous_book");
     const applyPrevBtn = document.getElementById("apply_prev_book");
-    const titleInput = document.getElementById(
-      "title"
-    ) as HTMLInputElement | null;
-    const bookUrlInput = document.getElementById(
-      "book_url"
-    ) as HTMLInputElement | null;
-    const sourceUrlInput = document.getElementById(
-      "source_url"
-    ) as HTMLInputElement | null;
-    const sourceNameInput = document.getElementById(
-      "source_name"
-    ) as HTMLInputElement | null;
+    const titleInput = document.getElementById("title");
+    const bookUrlInput = document.getElementById("book_url");
+    const sourceUrlInput = document.getElementById("source_url");
+    const sourceNameInput = document.getElementById("source_name");
 
     function applyPreviousBook() {
       if (!prevSelect) return;
