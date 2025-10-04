@@ -2,6 +2,7 @@
 title: "graphene-djangoでのenum.Enumの扱い"
 date: 2019-03-14
 summary: "graphene-djangoでenum.Enumを引数に使う際はfrom_enum()で明示的に実体化し、同じEnumを複数回変換するとスキーマ重複エラーになるため共通化が必要"
+tags: ["Python", "GraphQL", "Django"]
 ---
 
 djangoでmodelを書いていてchoiceFieldでは普通enumを用いる。

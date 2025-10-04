@@ -2,6 +2,7 @@
 title: "WindowsAPIのCryptAPIをWindows以外で再現する方法"
 date: 2023-06-03
 summary: "CryptAPIについての覚書"
+tags: ["Python", "WindowsAPI", "セキュリティ"]
 ---
 
 ## 概要

@@ -61,9 +61,15 @@ const posts = await getCollection("blog");
                           day: "numeric",
                         })}
                       </time>
-                      <span class="text-orange-700 text-sm bg-orange-100 px-2 py-1 rounded-full">
-                        📖 5分読了
-                      </span>
+                      {post.data.tags && post.data.tags.length > 0 && (
+                        <div class="flex flex-wrap gap-1">
+                          {post.data.tags.map((tag) => (
+                            <span class="text-orange-700 text-xs bg-orange-100 px-2 py-1 rounded-full">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div class="text-gray-700 text-base leading-relaxed mb-6">

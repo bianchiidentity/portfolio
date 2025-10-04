@@ -2,6 +2,7 @@
 title: "graphene-djangoではrelayを使う前提であるので注意"
 date: 2019-03-14
 summary: "graphene-djangoではrelayが必須"
+tags: ["Python", "GraphQL", "Django"]
 ---
 ## 背景
 
