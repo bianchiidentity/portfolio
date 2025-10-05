@@ -17,7 +17,7 @@ export async function getStaticPaths() {
 const { slug } = Astro.props;
 const post = await getCollection(
   "blog",
-  ({ slug: postSlug }) => postSlug === slug
+  ({ slug: postSlug }) => postSlug === slug,
 );
 const postData = post[0];
 const { Content, headings } = await render(postData);
@@ -109,7 +109,7 @@ const toc = headings
             </p>
           </div>
 
-          <div class="mt-8" id="content">
+          <div class="prose prose-lg max-w-none" id="content">
             <Content />
           </div>
         </div>
@@ -169,7 +169,7 @@ const toc = headings
       const headingElement = currentHeading as HTMLElement;
       if (headingElement.id) {
         const activeLink = document.querySelector(
-          `nav a[href="#${headingElement.id}"]`
+          `nav a[href="#${headingElement.id}"]`,
         );
         if (activeLink) {
           activeLink.classList.remove("text-gray-700");
@@ -184,112 +184,470 @@ const toc = headings
 
   // 初期化時にアクティブなアイテムを設定
   updateActiveTocItem();
+
+  // Markdownの空行を適切に表示するための処理
+  function preserveMarkdownLineBreaks() {
+    const contentDiv = document.getElementById("content");
+    if (!contentDiv) return;
+
+    // 段落間の空行を検出して<br>タグに変換
+    const paragraphs = contentDiv.querySelectorAll("p");
+    const elements = Array.from(contentDiv.children);
+
+    for (let i = 0; i < elements.length - 1; i++) {
+      const currentElement = elements[i];
+      const nextElement = elements[i + 1];
+
+      // 段落の後に別の段落がある場合、空行を追加
+      if (currentElement.tagName === "P" && nextElement.tagName === "P") {
+        const currentText = currentElement.textContent?.trim();
+        const nextText = nextElement.textContent?.trim();
+
+        // 両方の段落にテキストがある場合、間に空行を追加
+        if (currentText && nextText) {
+          const br = document.createElement("br");
+          br.style.margin = "1.5em 0";
+          br.style.display = "block";
+          currentElement.parentNode?.insertBefore(br, nextElement);
+        }
+      }
+    }
+
+    // 段落内の改行も保持
+    paragraphs.forEach((p) => {
+      const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        textNodes.push(node);
+      }
+
+      textNodes.forEach((textNode) => {
+        if (textNode.textContent && textNode.textContent.includes("\n")) {
+          const parent = textNode.parentNode;
+          if (!parent) return;
+
+          const parts = textNode.textContent.split("\n");
+          textNode.textContent = parts[0];
+
+          for (let i = 1; i < parts.length; i++) {
+            parent.insertBefore(
+              document.createElement("br"),
+              textNode.nextSibling,
+            );
+            const newTextNode = document.createTextNode(parts[i]);
+            parent.insertBefore(newTextNode, textNode.nextSibling);
+          }
+        }
+      });
+    });
+  }
+
+  // DOMが読み込まれた後に実行
+  document.addEventListener("DOMContentLoaded", preserveMarkdownLineBreaks);
+  preserveMarkdownLineBreaks(); // 即座にも実行
 </script>
 
 <style>
   @layer components {
     /* Markdownコンテンツのスタイル */
+    .prose {
+      word-wrap: break-word;
+      margin: 0 !important;
+    }
+
+    .prose :global(h1) {
+      font-size: 1.75rem !important;
+      font-weight: 600 !important;
+      color: #24292e !important;
+      margin: 2em 0 0.1em 0 !important;
+      padding-bottom: 0.3em !important;
+      border-bottom: 1px solid #333333 !important;
+    }
+
     .prose :global(h2) {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #24292e;
-      margin: 2em 0 1em 0;
-      padding-bottom: 0.3em;
-      border-bottom: 1px solid #e1e4e8;
+      font-size: 1.75rem !important;
+      font-weight: 600 !important;
+      color: #24292e !important;
+      margin: 2em 0 0.1em 0 !important;
+      padding-bottom: 0.3em !important;
+      border-bottom: 1px solid #333333 !important;
     }
 
     .prose :global(h3) {
-      font-size: 1.25rem;
+      font-size: 1.4rem !important;
       font-weight: 600;
       color: #24292e;
-      margin: 1.5em 0 0.8em 0;
+      margin: 2.5em 0 0.8em 0;
     }
 
     .prose :global(h4) {
       font-size: 1.1rem;
       font-weight: 600;
       color: #24292e;
-      margin: 1.2em 0 0.6em 0;
+      margin: 1.2em 0 0.2em 0 !important;
+    }
+
+    /* ブログコンテンツ内の見出しの下マージンを調整 */
+    .prose :global(h1),
+    .prose :global(h2),
+    .prose :global(h3),
+    .prose :global(h4),
+    .prose :global(h5),
+    .prose :global(h6) {
+      margin-bottom: 0.5em !important;
     }
 
     .prose :global(p) {
       color: #24292e;
       font-size: 1rem;
-      line-height: 1.6;
-      margin: 1em 0;
+      line-height: 1.8;
+      margin: 1.5em 0;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    /* 段落間の空行を強制的に表示 */
+    .prose :global(p:not(:last-child)) {
+      margin-bottom: 1.5em;
+    }
+
+    /* 空行を表現するための特別なスタイル */
+    .prose :global(p:empty) {
+      display: block;
+      height: 1.5em;
+      margin: 0;
+      content: "";
+    }
+
+    /* 段落間のスペースを増やす */
+    .prose :global(p + p) {
+      margin-top: 1.5em;
+    }
+
+    /* 空の段落の前後のスペースを調整 */
+    .prose :global(p:empty + p) {
+      margin-top: 0;
+    }
+
+    .prose :global(p + p:empty) {
+      margin-top: 0;
+    }
+
+    /* 表の直前の段落のマージンを特別に制御 */
+    .prose :global(p:last-of-type) {
+      margin-bottom: 1.5em;
+    }
+
+    .prose :global(p:has(+ table)) {
+      margin-bottom: 0.1em;
+    }
+
+    .prose :global(br) {
+      display: block;
+      margin: 0.8em 0;
+      content: "";
+    }
+
+    /* 改行をより明確に表示 */
+    .prose :global(br + br) {
+      margin: 1.5em 0;
+    }
+
+    /* 段落間のスペースを確保 */
+    .prose :global(p + p) {
+      margin-top: 1.5em;
+    }
+
+    /* 見出しの前後のスペースを調整 */
+    .prose :global(h2 + p) {
+      margin-top: 0.1em !important;
+    }
+
+    /* より強力なセレクターでH1とH2スタイルを確実に適用 */
+    #content :global(h1),
+    #content :global(h2) {
+      font-size: 1.75rem !important;
+      font-weight: 600 !important;
+      color: #24292e !important;
+      margin: 2em 0 0.5em 0 !important;
+      padding-bottom: 0.3em !important;
+      border-bottom: 1px solid #333333 !important;
+    }
+
+    /* ブログコンテンツ内のすべての見出しの下マージンを強制的に調整 */
+    #content :global(h1),
+    #content :global(h2),
+    #content :global(h3),
+    #content :global(h4),
+    #content :global(h5),
+    #content :global(h6) {
+      margin-bottom: 0.5em !important;
+    }
+
+    /* h3の上のマージンを特別に調整 */
+    #content :global(h3) {
+      margin-top: 2.5em !important;
+    }
+
+    #content :global(h2 + p) {
+      margin-top: 0.1em !important;
+    }
+
+    /* より強力なセレクターで表の格子を確実に表示 */
+    #content :global(table) {
+      border-collapse: collapse !important;
+      border: 2px solid #d0d7de !important;
+    }
+
+    #content :global(table th),
+    #content :global(table td) {
+      border: 1px solid #d0d7de !important;
+    }
+
+    .prose :global(h3 + p),
+    .prose :global(h4 + p) {
+      margin-top: 0.5em;
+    }
+
+    /* リストの前後のスペースを調整 */
+    .prose :global(p + ul),
+    .prose :global(p + ol) {
+      margin-top: 1em;
+    }
+
+    .prose :global(ul + p),
+    .prose :global(ol + p) {
+      margin-top: 1em;
+    }
+
+    /* 表の前の要素との間隔を調整 */
+    .prose :global(p + table) {
+      margin-top: 0.1em !important;
+    }
+
+    .prose :global(h4 + table) {
+      margin-top: 0.1em !important;
+    }
+
+    .prose :global(h3 + table) {
+      margin-top: 0.1em !important;
+    }
+
+    .prose :global(h2 + table) {
+      margin-top: 0.1em !important;
+    }
+
+    /* 表の前の段落のマージンを削除 */
+    .prose :global(p:has(+ table)) {
+      margin-bottom: 0.1em !important;
+    }
+
+    /* より強力なセレクターで表の前の要素のマージンを制御 */
+    #content :global(p + table) {
+      margin-top: 0.1em !important;
+    }
+
+    #content :global(h2 + table),
+    #content :global(h3 + table),
+    #content :global(h4 + table) {
+      margin-top: 0.1em !important;
+    }
+
+    #content :global(p:has(+ table)) {
+      margin-bottom: 0.1em !important;
     }
 
     .prose :global(ul),
     .prose :global(ol) {
       color: #24292e;
-      line-height: 1.6;
-      margin: 1em 0;
-      padding-left: 2em;
+      line-height: 1.8;
+      margin: 1.5em 0;
+      padding-left: 1.5em;
+    }
+
+    .prose :global(ul) {
+      list-style-type: disc !important;
+    }
+
+    .prose :global(ol) {
+      list-style-type: decimal !important;
+    }
+
+    /* より強力なセレクターでリストスタイルを確実に適用 */
+    #content :global(ul) {
+      list-style-type: disc !important;
+    }
+
+    #content :global(ol) {
+      list-style-type: decimal !important;
     }
 
     .prose :global(li) {
-      margin: 0.3em 0;
+      margin: 0.8em 0;
+      line-height: 1.8;
+      padding-left: 0.5em;
+      list-style-position: inside;
+    }
+
+    /* より強力なセレクターでリスト項目スタイルを確実に適用 */
+    #content :global(li) {
+      list-style-position: inside !important;
+      margin: 0.8em 0 !important;
+      padding-left: 0.5em !important;
+    }
+
+    /* ネストしたリストのスタイル */
+    .prose :global(ul ul) {
+      list-style-type: circle !important;
+      margin: 0.5em 0;
+    }
+
+    .prose :global(ul ul ul) {
+      list-style-type: square !important;
+    }
+
+    /* Tailwind CSSのリセットを上書き */
+    .prose :global(ul[class*="list-"]),
+    .prose :global(ol[class*="list-"]) {
+      list-style-type: disc !important;
+    }
+
+    .prose :global(ol[class*="list-"]) {
+      list-style-type: decimal !important;
+    }
+
+    /* 最も強力なセレクターでリストスタイルを強制適用 */
+    #content.prose ul,
+    #content.prose ol,
+    #content .prose ul,
+    #content .prose ol {
+      list-style-type: disc !important;
+      padding-left: 1.5em !important;
+    }
+
+    #content.prose ol,
+    #content .prose ol {
+      list-style-type: decimal !important;
+      padding-left: 1.5em !important;
+    }
+
+    #content.prose li,
+    #content .prose li {
+      list-style-position: inside !important;
     }
 
     .prose :global(code) {
       background: #f6f8fa;
       padding: 0.2em 0.4em;
       border-radius: 3px;
-      font-family:
-        "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
+        monospace;
       color: #e36209;
       font-size: 0.9em;
     }
 
     .prose :global(pre) {
-      background: #f6f8fa;
-      color: #24292e;
-      padding: 1em;
+      background: #0d1117 !important;
+      color: #ffffff !important;
+      padding: 1.5em;
       border-radius: 6px;
       overflow-x: auto;
-      margin: 1em 0;
-      border: 1px solid #e1e4e8;
+      margin: 1.5em 0;
+      border: 1px solid #333333;
+      white-space: pre;
+      line-height: 1.6;
     }
 
     .prose :global(pre code) {
-      background: none;
+      background: none !important;
       padding: 0;
-      color: inherit;
+      color: inherit !important;
+    }
+
+    /* シンタックスハイライトの色を調整 */
+    .prose :global(pre .token.comment) {
+      color: #8b949e !important;
+    }
+
+    .prose :global(pre .token.keyword) {
+      color: #ff7b72 !important;
+    }
+
+    .prose :global(pre .token.string) {
+      color: #a5d6ff !important;
+    }
+
+    .prose :global(pre .token.number) {
+      color: #79c0ff !important;
+    }
+
+    .prose :global(pre .token.function) {
+      color: #d2a8ff !important;
+    }
+
+    .prose :global(pre .token.variable) {
+      color: #ffa657 !important;
+    }
+
+    .prose :global(pre .token.operator) {
+      color: #f0f6fc !important;
+    }
+
+    .prose :global(pre .token.punctuation) {
+      color: #f0f6fc !important;
     }
 
     .prose :global(blockquote) {
       border-left: 4px solid #dfe2e5;
-      padding-left: 1em;
-      margin: 1em 0;
+      padding-left: 1.5em;
+      margin: 1.5em 0;
       color: #6a737d;
       font-style: italic;
+      line-height: 1.8;
     }
 
     .prose :global(a) {
-      color: #0366d6;
+      color: #0066cc !important;
       text-decoration: none;
     }
 
     .prose :global(a:hover) {
+      color: #004499 !important;
       text-decoration: underline;
     }
 
-    .prose :global(table) {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 1em 0;
+    .prose :global(a:visited) {
+      color: #0066cc !important;
     }
 
-    .prose :global(th),
-    .prose :global(td) {
-      border: 1px solid #dfe2e5;
-      padding: 0.5em;
-      text-align: left;
+    .prose :global(table) {
+      border-collapse: collapse !important;
+      width: 100%;
+      margin: 0.1em 0 1.5em 0 !important;
+      background: #ffffff;
+      border: 2px solid #d0d7de !important;
+      white-space: normal !important;
     }
 
     .prose :global(th) {
+      border: 1px solid #d0d7de !important;
+      padding: 0.8em;
+      text-align: center;
+      line-height: 1.6;
       background: #f6f8fa;
       font-weight: 600;
+      color: #24292e;
+      white-space: normal !important;
+    }
+
+    .prose :global(td) {
+      border: 1px solid #d0d7de !important;
+      padding: 0.8em 0.8em 0.8em 1.2em;
+      text-align: left;
+      line-height: 1.6;
+      color: #24292e;
+      white-space: normal !important;
     }
 
     @media (max-width: 768px) {

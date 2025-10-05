@@ -13,6 +13,16 @@ export default defineConfig({
     },
   }),
 
+  markdown: {
+    shikiConfig: {
+      theme: 'github-dark',
+      wrap: true,
+    },
+    remarkPlugins: [],
+    rehypePlugins: [],
+    gfm: true,
+  },
+
   vite: {
     plugins: [tailwindcss()],
   },

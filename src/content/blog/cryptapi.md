@@ -53,7 +53,6 @@ WindowsAPIの暗号化をWindowsAPIが存在しないマシン上で動かした
 暗号化 | RC2 or RC4
 ハッシュ | MD5 or SHA
 
-
 ### Hash計算
 #### CryptCreateHash
 ここではハッシュ計算の方式を決めます。
