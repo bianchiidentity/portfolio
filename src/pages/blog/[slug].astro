@@ -599,12 +599,22 @@ const toc = headings
     }
 
     .prose :global(blockquote) {
-      border-left: 4px solid #dfe2e5;
-      padding-left: 1.5em;
-      margin: 1.5em 0;
-      color: #6a737d;
-      font-style: italic;
-      line-height: 1.8;
+      border-left: 4px solid #dfe2e5 !important;
+      padding-left: 1.5em !important;
+      margin: 2em 0 !important;
+      color: #6a737d !important;
+      font-style: italic !important;
+      line-height: 1.8 !important;
+    }
+
+    /* より強力なセレクターでblockquoteスタイルを確実に適用 */
+    #content :global(blockquote) {
+      border-left: 4px solid #dfe2e5 !important;
+      padding-left: 1.5em !important;
+      margin: 2em 0 !important;
+      color: #6a737d !important;
+      font-style: italic !important;
+      line-height: 1.8 !important;
     }
 
     .prose :global(a) {
