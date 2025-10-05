@@ -27,7 +27,7 @@ class BarEnum(graphene.Enum):
 
 このgrapheneのEnumsの説明ではpythonのEnum.enumは次のように使えるとなっている。
 
-```python:mutation.py
+```python
 
 import enum
 
