@@ -6,21 +6,24 @@
 - 👤 プロフィールページ
 - 📊 ダッシュボード
 
-## 🚀 Project Structure
+## 📋 セットアップ要件
+- Node.js: v24.9.0
+- npm: v11.6.0
+- Cloudflare Wrangler CLI: v4.42.0
 
-## 🧞 Commands
+## 🛠️ セットアップ手順
 
-All commands are run from the root of the project, from a terminal:
+1. 依存関係をインストール:
+   ```bash
+   npm install
+   ```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+2. データベースを初期化:
+   ```bash
+   npx wrangler d1 execute lifelog --local --file=./schema.sql
+   ```
 
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+3. 開発用データベースにシードデータを投入:
+   ```bash
+   npm run dev-db:seed
+   ```
